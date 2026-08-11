@@ -5,7 +5,7 @@ import { ensureChatSession } from './chatSession.js'
 import { startExecutor } from './executor.js'
 import { startRepl } from './repl.js'
 import { runAdminCommand } from './admin.js'
-import { dim } from './renderer.js'
+import { dim, bold, printHeader, printCommandHelp } from './renderer.js'
 
 function parseArgs(argv) {
   let serverOverride = null
@@ -29,23 +29,53 @@ function parseArgs(argv) {
 }
 
 function printHelp() {
-  console.log(`
-claude-remote — run Claude Code from anywhere, executed on this machine
+  printHeader('claude-remote')
+  console.log("Run Claude Code from anywhere — reasoning happens on the server's")
+  console.log('login; execution happens wherever this CLI is running.\n')
 
-Usage:
-  claude-remote                    Connect and open the chat prompt
-  claude-remote setup               Re-run first-time setup (server, root, name)
-  claude-remote --server <url>      Use this server URL for just this run
-  claude-remote -s <url>            Shorthand for --server
+  console.log(bold('Commands'))
+  printCommandHelp([
+    {
+      usage: 'claude-remote',
+      description: 'Connect and open the interactive chat prompt.',
+      example: 'claude-remote',
+    },
+    {
+      usage: 'claude-remote setup',
+      description: 'Re-run first-time setup (server URL, working folder, display name).',
+      example: 'claude-remote setup',
+    },
+    {
+      usage: 'claude-remote admin list',
+      description: 'List every account on the server. Admin accounts only.',
+      example: 'claude-remote admin list',
+    },
+    {
+      usage: 'claude-remote admin add <username> [--admin]',
+      description: 'Create a new account, optionally as an admin. Admin accounts only.',
+      example: 'claude-remote admin add rupali --admin',
+    },
+    {
+      usage: 'claude-remote admin remove <username>',
+      description: "Remove an account. Admin accounts only; you can't remove your own.",
+      example: 'claude-remote admin remove rupali',
+    },
+  ])
 
-  claude-remote admin list                    List accounts (admin only)
-  claude-remote admin add <username> [--admin] Create an account (admin only)
-  claude-remote admin remove <username>       Remove an account (admin only)
+  console.log(bold('Flags'))
+  printCommandHelp([
+    {
+      usage: '--server <url>, -s <url>',
+      description: 'Use this server URL for just this run — never overwrites the saved one.',
+      example: 'claude-remote --server wss://abc123.ngrok-free.app/ws',
+    },
+    {
+      usage: '--help, -h',
+      description: 'Show this help.',
+    },
+  ])
 
-Examples:
-  claude-remote --server wss://abc123.ngrok-free.app/ws
-  claude-remote admin add rupali
-`)
+  console.log(dim('Docs: https://nimapdevyash.github.io/claude-remote/'))
 }
 
 async function main() {

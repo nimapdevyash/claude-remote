@@ -74,6 +74,18 @@ export function printKeyValue(pairs) {
 
 export const PROMPT_SYMBOL = `${accent('❯')} `
 
+// Each entry: { usage, description, example? } — used by --help to show
+// what a command does and a concrete, copy-pasteable example, not just a
+// bare usage string.
+export function printCommandHelp(entries) {
+  for (const { usage, description, example } of entries) {
+    console.log(`  ${bold(usage)}`)
+    console.log(`    ${dim(description)}`)
+    if (example) console.log(`    ${dim('$')} ${accent(example)}`)
+    console.log()
+  }
+}
+
 // --- Turn/event rendering --------------------------------------------------
 
 // Creates a stateful printer for one turn's stream of raw claude-code
