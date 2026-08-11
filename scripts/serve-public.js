@@ -139,7 +139,10 @@ async function main() {
     lines.push(`  Sign in with:  ${creds.username} / ${creds.password}`, '')
   }
   lines.push(
-    '  Point the runner CLI at this tunnel for just this run:',
+    '  CLI setup (macOS/Linux) — Windows PowerShell version in the README:',
+    '    curl -fsSL https://raw.githubusercontent.com/nimapdevyash/claude-remote/main/install.sh | bash',
+    '',
+    '  Then connect it to this tunnel for just this run:',
     `    claude-remote --server ${wsUrl}/ws`,
     '='.repeat(64),
     '',
