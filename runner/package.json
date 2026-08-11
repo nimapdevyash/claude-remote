@@ -1,0 +1,16 @@
+{
+  "name": "runner",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "claude-remote-runner": "src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "ws": "^8.18.0"
+  }
+}
