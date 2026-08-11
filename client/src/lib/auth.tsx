@@ -4,6 +4,7 @@ import { ApiError, api, clearToken, getToken, setToken as persistToken } from '.
 type AuthContextValue = {
   authed: boolean
   username: string | null
+  isAdmin: boolean
   error: string | null
   loggingIn: boolean
   login: (username: string, password: string) => Promise<void>
@@ -15,6 +16,7 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [authed, setAuthed] = useState(() => Boolean(getToken()))
   const [username, setUsername] = useState<string | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loggingIn, setLoggingIn] = useState(false)
 
@@ -23,6 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearToken()
       setAuthed(false)
       setUsername(null)
+      setIsAdmin(false)
     }
     window.addEventListener('claude-remote:unauthorized', handleUnauthorized)
     return () => window.removeEventListener('claude-remote:unauthorized', handleUnauthorized)
@@ -32,7 +35,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (authed && !username) {
       api
         .me()
-        .then((res) => setUsername(res.username))
+        .then((res) => {
+          setUsername(res.username)
+          setIsAdmin(res.isAdmin)
+        })
         .catch(() => {})
     }
   }, [authed, username])
@@ -57,10 +63,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearToken()
     setAuthed(false)
     setUsername(null)
+    setIsAdmin(false)
   }
 
   return (
-    <AuthContext.Provider value={{ authed, username, error, loggingIn, login, logout }}>
+    <AuthContext.Provider value={{ authed, username, isAdmin, error, loggingIn, login, logout }}>
       {children}
     </AuthContext.Provider>
   )

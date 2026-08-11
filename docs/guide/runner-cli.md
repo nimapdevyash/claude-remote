@@ -80,7 +80,16 @@ claude-remote setup               Re-run first-time setup (server, root, name)
 claude-remote --server <url>      Use this server URL for just this run
 claude-remote -s <url>            Shorthand for --server
 claude-remote --help              Show this
+
+claude-remote admin list                     List accounts (admin only)
+claude-remote admin add <username> [--admin] Create an account (admin only)
+claude-remote admin remove <username>        Remove an account (admin only)
 ```
+
+The `admin` commands are thin clients over `/api/admin/*` — the server
+enforces admin access on every one of them, so running them signed in as a
+non-admin account just gets a 403, same as calling the API directly would.
+See [Auth & security](/guide/security) for how accounts and roles work.
 
 `--server`/`-s` is the one to reach for when you're tunneling with ngrok
 and get a fresh random URL each time — see

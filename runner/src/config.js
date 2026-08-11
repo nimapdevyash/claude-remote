@@ -50,7 +50,11 @@ function toHttpBaseUrl(serverUrl) {
 // config > interactive prompt. Only the prompted value is ever persisted —
 // a flag or env var is meant to be a one-off override (e.g. a fresh ngrok
 // URL) and shouldn't silently overwrite what's saved for next time.
-export async function loadConfig({ serverOverride } = {}) {
+//
+// `minimal: true` (used by `admin` subcommands) skips the root/name
+// prompts entirely — those describe this machine's executor, which admin
+// commands never start.
+export async function loadConfig({ serverOverride, minimal = false } = {}) {
   const saved = loadSetup()
   const { SERVER_URL, ROOT, NAME } = process.env
   let changed = false
@@ -71,18 +75,21 @@ export async function loadConfig({ serverOverride } = {}) {
   }
 
   let root = ROOT?.trim() || saved.root
-  if (!root) {
-    const answer = await prompt(`Folder Claude Code may work in on this machine [${os.homedir()}]: `)
-    root = answer || os.homedir()
-    changed = true
-  }
-  root = path.resolve(root)
-
   let name = NAME?.trim() || saved.name
-  if (!name) {
-    const answer = await prompt(`Display name for this machine [${os.hostname()}]: `)
-    name = answer || os.hostname()
-    changed = true
+
+  if (!minimal) {
+    if (!root) {
+      const answer = await prompt(`Folder Claude Code may work in on this machine [${os.homedir()}]: `)
+      root = answer || os.homedir()
+      changed = true
+    }
+    root = path.resolve(root)
+
+    if (!name) {
+      const answer = await prompt(`Display name for this machine [${os.hostname()}]: `)
+      name = answer || os.hostname()
+      changed = true
+    }
   }
 
   if (changed) {

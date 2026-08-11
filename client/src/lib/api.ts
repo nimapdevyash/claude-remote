@@ -1,4 +1,4 @@
-import type { BrowseResult, RunnerInfo, SessionDetail, SessionSummary } from '../types/api'
+import type { AccountInfo, BrowseResult, RunnerInfo, SessionDetail, SessionSummary } from '../types/api'
 
 const TOKEN_KEY = 'claude-remote:token'
 
@@ -62,7 +62,7 @@ export const api = {
     return request<void>('/auth/logout', { method: 'POST' })
   },
   me() {
-    return request<{ username: string }>('/auth/me')
+    return request<{ username: string; isAdmin: boolean }>('/auth/me')
   },
   listSessions() {
     return request<SessionSummary[]>('/sessions')
@@ -96,5 +96,17 @@ export const api = {
   },
   browseRunnerFs(runnerId: string, path: string) {
     return request<BrowseResult>(`/runners/${runnerId}/browse?path=${encodeURIComponent(path)}`)
+  },
+  adminListAccounts() {
+    return request<AccountInfo[]>('/admin/accounts')
+  },
+  adminCreateAccount(payload: { username: string; password: string; isAdmin?: boolean }) {
+    return request<AccountInfo>('/admin/accounts', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+  },
+  adminRemoveAccount(username: string) {
+    return request<void>(`/admin/accounts/${encodeURIComponent(username)}`, { method: 'DELETE' })
   },
 }

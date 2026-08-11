@@ -29,6 +29,18 @@ function readEnvCredentials() {
   return username && password ? { username, password } : null
 }
 
+// Usernames only, never passwords — those aren't recoverable from the
+// stored hash, and this file only reads the same accounts.json the
+// server itself manages.
+function readOtherUsernames(excludeUsername) {
+  try {
+    const map = JSON.parse(fs.readFileSync(path.join(ROOT, 'server', 'data', 'accounts.json'), 'utf-8'))
+    return Object.keys(map).filter((u) => u !== excludeUsername)
+  } catch {
+    return []
+  }
+}
+
 function checkNgrokInstalled() {
   return new Promise((resolve) => {
     const probe = spawn('ngrok', ['version'])
@@ -136,7 +148,12 @@ async function main() {
     '',
   ]
   if (creds) {
-    lines.push(`  Sign in with:  ${creds.username} / ${creds.password}`, '')
+    lines.push(`  Sign in with:  ${creds.username} / ${creds.password}`)
+    const others = readOtherUsernames(creds.username)
+    if (others.length > 0) {
+      lines.push(`  Other accounts (password not shown): ${others.join(', ')}`)
+    }
+    lines.push('')
   }
   lines.push(
     '  CLI setup (macOS/Linux) — Windows PowerShell version in the README:',

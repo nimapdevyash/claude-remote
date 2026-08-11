@@ -1,8 +1,10 @@
-import { Circle, HardDrive, LogOut, Plus, Radio, Terminal, User, Wifi, WifiOff } from 'lucide-react'
+import { useState } from 'react'
+import { Circle, HardDrive, LogOut, Plus, Radio, ShieldCheck, Terminal, User, Wifi, WifiOff } from 'lucide-react'
 import type { SessionSummary } from '../types/api'
 import { relativeTime } from '../lib/format'
 import { useAuth } from '../lib/auth'
 import { useWs } from '../lib/ws'
+import { AdminPanel } from './AdminPanel'
 
 type Props = {
   sessions: SessionSummary[]
@@ -12,8 +14,9 @@ type Props = {
 }
 
 export function Sidebar({ sessions, activeId, onSelect, onNewSession }: Props) {
-  const { logout, username } = useAuth()
+  const { logout, username, isAdmin } = useAuth()
   const { connected } = useWs()
+  const [adminOpen, setAdminOpen] = useState(false)
 
   return (
     <aside className="flex h-full w-72 flex-col border-r border-base-800 bg-base-900">
@@ -88,6 +91,15 @@ export function Sidebar({ sessions, activeId, onSelect, onNewSession }: Props) {
             {username}
           </p>
         )}
+        {isAdmin && (
+          <button
+            onClick={() => setAdminOpen(true)}
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-base-400 transition hover:bg-base-800 hover:text-base-100"
+          >
+            <ShieldCheck size={14} />
+            Manage accounts
+          </button>
+        )}
         <button
           onClick={logout}
           className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-base-400 transition hover:bg-base-800 hover:text-base-100"
@@ -96,6 +108,7 @@ export function Sidebar({ sessions, activeId, onSelect, onNewSession }: Props) {
           Sign out
         </button>
       </div>
+      {adminOpen && <AdminPanel onClose={() => setAdminOpen(false)} />}
     </aside>
   )
 }

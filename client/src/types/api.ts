@@ -20,6 +20,11 @@ export type RunnerInfo = {
   connectedAt: number
 }
 
+export type AccountInfo = {
+  username: string
+  isAdmin: boolean
+}
+
 // Raw JSON-line event emitted by `claude -p --output-format stream-json`.
 export type ClaudeEvent = Record<string, any>
 

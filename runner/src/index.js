@@ -4,11 +4,13 @@ import { ensureAuthToken } from './authClient.js'
 import { ensureChatSession } from './chatSession.js'
 import { startExecutor } from './executor.js'
 import { startRepl } from './repl.js'
+import { runAdminCommand } from './admin.js'
 import { dim } from './renderer.js'
 
 function parseArgs(argv) {
   let serverOverride = null
   let command = null
+  const rest = []
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i]
     if (arg === '--server' || arg === '-s') {
@@ -19,9 +21,11 @@ function parseArgs(argv) {
       command = 'help'
     } else if (!command && !arg.startsWith('-')) {
       command = arg
+    } else {
+      rest.push(arg)
     }
   }
-  return { serverOverride, command }
+  return { serverOverride, command, rest }
 }
 
 function printHelp() {
@@ -34,13 +38,18 @@ Usage:
   claude-remote --server <url>      Use this server URL for just this run
   claude-remote -s <url>            Shorthand for --server
 
+  claude-remote admin list                    List accounts (admin only)
+  claude-remote admin add <username> [--admin] Create an account (admin only)
+  claude-remote admin remove <username>       Remove an account (admin only)
+
 Examples:
   claude-remote --server wss://abc123.ngrok-free.app/ws
+  claude-remote admin add rupali
 `)
 }
 
 async function main() {
-  const { serverOverride, command } = parseArgs(process.argv.slice(2))
+  const { serverOverride, command, rest } = parseArgs(process.argv.slice(2))
 
   if (command === 'help') {
     printHelp()
@@ -51,6 +60,14 @@ async function main() {
     resetSetup()
     console.log('Setup cleared — run `claude-remote` again to reconfigure.')
     process.exit(0)
+  }
+
+  if (command === 'admin') {
+    const config = await loadConfig({ serverOverride, minimal: true })
+    const token = await ensureAuthToken(config.httpBaseUrl)
+    const [subcommand, ...subArgs] = rest
+    await runAdminCommand(config.httpBaseUrl, token, subcommand, subArgs)
+    return
   }
 
   const config = await loadConfig({ serverOverride })

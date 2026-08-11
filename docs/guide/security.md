@@ -2,26 +2,51 @@
 
 ## Signing in
 
-Sign-in is a single username/password account (not a shared static
-token). Create it with:
+Sign-in is username/password (not a shared static token) — multiple
+accounts are supported, each independently. Create the first one with:
 
 ```bash
 npm run create-account -w server
 ```
 
 This hashes the password with `scrypt` (a random salt per account) and
-stores it in `server/data/account.json` — that file, along with the rest
-of `server/data/`, is git-ignored and never committed.
+stores every account in `server/data/accounts.json` — that file, along
+with the rest of `server/data/`, is git-ignored and never committed.
+Running the script again lets you add another account, or update an
+existing one's password, without touching the others.
 
 For headless/automated setups, you can instead set `ADMIN_USERNAME` and
-`ADMIN_PASSWORD` once in `server/.env`; the server hashes and stores them
-on first boot, and you can blank the env vars out again afterward.
+`ADMIN_PASSWORD` once in `server/.env`. That one account is synced to
+match on **every** boot (not just the first), always flagged as an admin,
+and printed to the console on startup — see
+[Exposing it remotely](/guide/remote-access) for how `npm run serve:public`
+folds this into its own banner too.
 
-Logging in (web UI or runner CLI) exchanges those credentials for a
-**session token** — a random 32-byte value, valid for 30 days, checked on
-every REST call and WebSocket connection. `POST /api/auth/logout`
-revokes it immediately. There's no cross-account concept here — it's one
-account, by design, for a personal remote-access tool.
+Logging in (web UI or runner CLI) exchanges credentials for a **session
+token** — a random 32-byte value, valid for 30 days, checked on every REST
+call and WebSocket connection. `POST /api/auth/logout` revokes it
+immediately.
+
+## Admin accounts
+
+An account with `isAdmin: true` (only the `ADMIN_USERNAME`-bootstrapped
+one, by default) can manage other accounts while signed in — no direct
+server shell access required:
+
+```bash
+claude-remote admin list                     # list accounts
+claude-remote admin add <username> [--admin]  # create one, optionally as admin
+claude-remote admin remove <username>         # remove one
+```
+
+Or from the web UI: a "Manage accounts" entry appears in the sidebar for
+admin accounts only. Both are thin clients over `/api/admin/*`, which
+`requireAdmin` middleware gates on every request — a non-admin account
+gets a 403 whether it goes through the CLI, the UI, or curl directly.
+The one guard rail: an admin can't remove the account they're currently
+signed in as (avoids an accidental lockout); do that from
+`npm run create-account -w server -- --remove <username>` on the server
+itself instead.
 
 ## Local sessions
 
