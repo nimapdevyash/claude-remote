@@ -10,7 +10,7 @@
     "docs"
   ],
   "scripts": {
-    "dev": "concurrently -n server,client -c blue,magenta \"npm run dev -w server\" \"npm run dev -w client\"",
+    "dev": "node scripts/dev.js",
     "build": "npm run build -w client",
     "start": "npm run start -w server",
     "serve:public": "node scripts/serve-public.js",
