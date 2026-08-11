@@ -126,4 +126,16 @@ wss.on('connection', (ws, req) => {
 server.listen(config.port, () => {
   console.log(`\n  claude-remote server listening on http://localhost:${config.port}\n`)
   console.log(`  Workspace root: ${config.workspaceRoot}\n`)
+
+  const creds = accounts.envCredentials()
+  if (creds) {
+    console.log('  Sign in with:')
+    console.log(`    username: ${creds.username}`)
+    console.log(`    password: ${creds.password}\n`)
+  } else if (accounts.exists()) {
+    console.log(`  Sign in as: ${accounts.username()}`)
+    console.log('  (password not shown — set ADMIN_USERNAME/ADMIN_PASSWORD in server/.env to have it printed here)\n')
+  } else {
+    console.log('  No account configured yet — run `npm run create-account -w server`\n')
+  }
 })

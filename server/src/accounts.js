@@ -14,6 +14,14 @@ function hashPassword(password, salt = crypto.randomBytes(16).toString('hex')) {
   return { salt, hash }
 }
 
+function matches(account, password) {
+  if (!account) return false
+  const { hash } = hashPassword(password, account.salt)
+  const a = Buffer.from(hash, 'hex')
+  const b = Buffer.from(account.hash, 'hex')
+  return a.length === b.length && crypto.timingSafeEqual(a, b)
+}
+
 function load() {
   try {
     return JSON.parse(fs.readFileSync(ACCOUNT_PATH, 'utf-8'))
@@ -27,17 +35,26 @@ function save(acc) {
   fs.writeFileSync(ACCOUNT_PATH, JSON.stringify(acc, null, 2))
 }
 
-function bootstrapFromEnv() {
-  const { ADMIN_USERNAME, ADMIN_PASSWORD } = process.env
-  if (!ADMIN_USERNAME?.trim() || !ADMIN_PASSWORD) return null
-  const { salt, hash } = hashPassword(ADMIN_PASSWORD)
-  const created = { username: ADMIN_USERNAME.trim(), salt, hash }
-  save(created)
-  console.log(`  Created account "${created.username}" from ADMIN_USERNAME/ADMIN_PASSWORD in .env`)
-  return created
-}
+let account = load()
 
-let account = load() || bootstrapFromEnv()
+// If ADMIN_USERNAME/ADMIN_PASSWORD are set in server/.env, they're the
+// source of truth for the single account on every boot (not just the
+// first one) — synced to match if needed, and kept in plaintext here
+// only for the length of this process so the server can print "sign in
+// with" on startup. The account file itself always stores a salted hash,
+// never the password.
+const { ADMIN_USERNAME, ADMIN_PASSWORD } = process.env
+let envCredentials = null
+if (ADMIN_USERNAME?.trim() && ADMIN_PASSWORD) {
+  const username = ADMIN_USERNAME.trim()
+  const upToDate = account?.username === username && matches(account, ADMIN_PASSWORD)
+  if (!upToDate) {
+    const { salt, hash } = hashPassword(ADMIN_PASSWORD)
+    account = { username, salt, hash }
+    save(account)
+  }
+  envCredentials = { username, password: ADMIN_PASSWORD }
+}
 
 export const accounts = {
   exists() {
@@ -46,16 +63,19 @@ export const accounts = {
   username() {
     return account?.username ?? null
   },
+  // Non-null only when the password is known in plaintext right now
+  // (came from server/.env this boot) — never derived from the stored
+  // hash, which is intentionally one-way.
+  envCredentials() {
+    return envCredentials
+  },
   create(username, password) {
     const { salt, hash } = hashPassword(password)
     account = { username, salt, hash }
     save(account)
+    if (envCredentials) envCredentials = null // .env no longer describes the live account
   },
   verify(username, password) {
-    if (!account || account.username !== username) return false
-    const { hash } = hashPassword(password, account.salt)
-    const a = Buffer.from(hash, 'hex')
-    const b = Buffer.from(account.hash, 'hex')
-    return a.length === b.length && crypto.timingSafeEqual(a, b)
+    return account?.username === username && matches(account, password)
   },
 }

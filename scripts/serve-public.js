@@ -4,6 +4,7 @@
 // the `ngrok` CLI to already be installed and authenticated
 // (`ngrok config add-authtoken <token>`, from your ngrok dashboard).
 import { spawn } from 'child_process'
+import fs from 'fs'
 import readline from 'readline'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -12,6 +13,21 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.join(__dirname, '..')
 
 const PORT = process.env.PORT || '4317'
+
+// Reads ADMIN_USERNAME/ADMIN_PASSWORD straight out of server/.env (if set)
+// so they can be folded into the final banner below — the same values the
+// server itself will sync the account to and print on its own startup.
+function readEnvCredentials() {
+  let text
+  try {
+    text = fs.readFileSync(path.join(ROOT, 'server', '.env'), 'utf-8')
+  } catch {
+    return null
+  }
+  const username = text.match(/^ADMIN_USERNAME=(.*)$/m)?.[1]?.trim()
+  const password = text.match(/^ADMIN_PASSWORD=(.*)$/m)?.[1]
+  return username && password ? { username, password } : null
+}
 
 function checkNgrokInstalled() {
   return new Promise((resolve) => {
@@ -111,18 +127,24 @@ async function main() {
   }
 
   const wsUrl = publicUrl.replace(/^https/, 'wss').replace(/^http/, 'ws')
-  const banner = [
+  const creds = readEnvCredentials()
+  const lines = [
     '',
     '='.repeat(64),
     `  claude-remote is live at: ${publicUrl}`,
     `  (local: http://localhost:${PORT})`,
     '',
+  ]
+  if (creds) {
+    lines.push(`  Sign in with:  ${creds.username} / ${creds.password}`, '')
+  }
+  lines.push(
     '  Point the runner CLI at this tunnel for just this run:',
     `    claude-remote --server ${wsUrl}/ws`,
     '='.repeat(64),
     '',
-  ].join('\n')
-  console.log(banner)
+  )
+  console.log(lines.join('\n'))
 }
 
 main()
