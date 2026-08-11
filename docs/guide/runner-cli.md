@@ -20,18 +20,25 @@ iwr https://raw.githubusercontent.com/nimapdevyash/claude-remote/main/install.ps
 ```
 
 Both scripts detect your OS, check for Node.js 18+, fetch the CLI, and put
-a `claude-remote-runner` command on your `PATH`. Nothing is installed
-outside `~/.claude-remote` (and, if needed, `~/.local/bin` or your User
-`PATH` on Windows) — see the scripts themselves at the repo root.
+a `claude-remote` command on your `PATH`. Nothing is installed outside
+`~/.claude-remote` (and, if needed, `~/.local/bin`, or your User `PATH` on
+Windows) — see the scripts themselves at the repo root.
+
+Re-running either one-liner always does a **clean reinstall**: it removes
+whatever's at `~/.claude-remote/app` first, then fetches a fresh copy.
+That's the answer to "how do I update" or "how do I get a clean slate" —
+just run the same command again. Your saved config, login session, and
+chat history live separately (directly under `~/.claude-remote/`, not
+`app/`) and survive a reinstall.
 
 ## First run
 
 ```bash
-claude-remote-runner
+claude-remote
 ```
 
 The first run asks three questions once, and remembers your answers in
-`~/.claude-remote-runner/config.json`:
+`~/.claude-remote/config.json`:
 
 1. **Server WebSocket URL** — `ws://<host>:4317/ws`, or `wss://...` through
    a tunnel
@@ -41,32 +48,44 @@ The first run asks three questions once, and remembers your answers in
 3. **Display name** — how it shows up in the web UI's "Run on" picker
 
 Then it signs you in (username/password — cached afterward at
-`~/.claude-remote-runner/session`), connects, and drops you into a `>`
-prompt:
+`~/.claude-remote/session`), connects, and drops you into a prompt:
 
 ```
-$ claude-remote-runner
-claude-remote — connected as "yashs-laptop"
-root: ~/projects
-session: A6WMYb1Hzx
+◆ claude-remote
+  connected as  "yashs-laptop"
+  server        ws://localhost:4317/ws
+  root          /home/yash/projects
+  session       A6WMYb1Hzx
 
-Type a task and press Enter. Ctrl+C or "exit" to quit.
+────────────────────────────────────────────────
+Type a task and press Enter.  Ctrl+C or "exit" to quit.
 
-> refactor the auth module to use async/await
+❯ refactor the auth module to use async/await
 ● Edit: src/auth.js
 Done — converted 4 callback chains to async/await.
 
 $0.06 · 12.3s · 2 turns
+
+❯
 ```
 
 Type a task, press Enter, watch it stream. `exit` or `quit` (or Ctrl+C)
 closes it.
 
-To change the server URL, root folder, or display name later:
+## Commands and flags
 
-```bash
-claude-remote-runner setup
 ```
+claude-remote                    Connect and open the chat prompt
+claude-remote setup               Re-run first-time setup (server, root, name)
+claude-remote --server <url>      Use this server URL for just this run
+claude-remote -s <url>            Shorthand for --server
+claude-remote --help              Show this
+```
+
+`--server`/`-s` is the one to reach for when you're tunneling with ngrok
+and get a fresh random URL each time — see
+[Exposing it remotely](/guide/remote-access) — since it overrides the
+saved server URL for a single run without touching what's saved.
 
 ## What's actually happening
 

@@ -2,8 +2,9 @@ import fs from 'fs'
 import os from 'os'
 import path from 'path'
 import { prompt, promptHidden } from './prompt.js'
+import { printHeader, printSuccess, dim } from './renderer.js'
 
-const TOKEN_PATH = path.join(os.homedir(), '.claude-remote-runner', 'session')
+const TOKEN_PATH = path.join(os.homedir(), '.claude-remote', 'session')
 
 function loadCachedToken() {
   try {
@@ -38,7 +39,8 @@ async function verifyToken(httpBaseUrl, token) {
 }
 
 async function interactiveLogin(httpBaseUrl) {
-  console.log(`\nSign in to ${httpBaseUrl}\n`)
+  printHeader('Sign in')
+  console.log(dim(`${httpBaseUrl}\n`))
   for (let attempt = 0; attempt < 5; attempt++) {
     const username = await prompt('Username: ')
     const password = await promptHidden('Password: ')
@@ -51,7 +53,7 @@ async function interactiveLogin(httpBaseUrl) {
       const body = await res.json()
       if (res.ok) {
         saveToken(body.token)
-        console.log(`Signed in as ${body.username}.\n`)
+        printSuccess(`Signed in as ${body.username}.\n`)
         return body.token
       }
       console.log(body.error || 'Login failed — try again.\n')

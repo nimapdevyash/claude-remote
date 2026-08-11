@@ -4,7 +4,7 @@
 #   curl -fsSL https://raw.githubusercontent.com/nimapdevyash/claude-remote/main/install.sh | bash
 #
 # Detects your OS/shell, checks for Node.js, fetches the runner CLI, and
-# puts a `claude-remote-runner` command on your PATH. It does not touch
+# puts a `claude-remote` command on your PATH. It does not touch
 # anything outside ~/.claude-remote and (if needed) ~/.local/bin.
 set -euo pipefail
 
@@ -12,7 +12,7 @@ REPO_URL="${CLAUDE_REMOTE_REPO_URL:-https://github.com/nimapdevyash/claude-remot
 ARCHIVE_URL="${CLAUDE_REMOTE_ARCHIVE_URL:-https://github.com/nimapdevyash/claude-remote/archive/refs/heads/main.tar.gz}"
 INSTALL_DIR="${CLAUDE_REMOTE_INSTALL_DIR:-$HOME/.claude-remote}"
 APP_DIR="$INSTALL_DIR/app"
-BIN_NAME="claude-remote-runner"
+BIN_NAME="claude-remote"
 
 info()  { printf '\033[36m==>\033[0m %s\n' "$1"; }
 warn()  { printf '\033[33m!!\033[0m %s\n' "$1"; }
@@ -42,17 +42,18 @@ Then re-run this installer."
 
 fetch_app() {
   mkdir -p "$INSTALL_DIR"
-  if [ -d "$APP_DIR/.git" ]; then
-    info "Updating existing install in $APP_DIR"
-    git -C "$APP_DIR" fetch --depth=1 origin main
-    git -C "$APP_DIR" reset --hard origin/main
-  elif command -v git >/dev/null 2>&1; then
-    info "Cloning claude-remote into $APP_DIR"
+  # Always a clean reinstall — never an incremental update — so re-running
+  # this exact command is the answer to "how do I get a fresh copy."
+  if [ -d "$APP_DIR" ]; then
+    info "Removing existing install at $APP_DIR"
     rm -rf "$APP_DIR"
+  fi
+
+  if command -v git >/dev/null 2>&1; then
+    info "Cloning claude-remote into $APP_DIR"
     git clone --depth=1 "$REPO_URL" "$APP_DIR"
   else
     info "git not found — downloading a source archive instead"
-    rm -rf "$APP_DIR"
     mkdir -p "$APP_DIR"
     curl -fsSL "$ARCHIVE_URL" | tar -xz -C "$APP_DIR" --strip-components=1
   fi

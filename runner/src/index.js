@@ -4,18 +4,59 @@ import { ensureAuthToken } from './authClient.js'
 import { ensureChatSession } from './chatSession.js'
 import { startExecutor } from './executor.js'
 import { startRepl } from './repl.js'
+import { dim } from './renderer.js'
+
+function parseArgs(argv) {
+  let serverOverride = null
+  let command = null
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i]
+    if (arg === '--server' || arg === '-s') {
+      serverOverride = argv[++i]
+    } else if (arg.startsWith('--server=')) {
+      serverOverride = arg.slice('--server='.length)
+    } else if (arg === '--help' || arg === '-h') {
+      command = 'help'
+    } else if (!command && !arg.startsWith('-')) {
+      command = arg
+    }
+  }
+  return { serverOverride, command }
+}
+
+function printHelp() {
+  console.log(`
+claude-remote — run Claude Code from anywhere, executed on this machine
+
+Usage:
+  claude-remote                    Connect and open the chat prompt
+  claude-remote setup               Re-run first-time setup (server, root, name)
+  claude-remote --server <url>      Use this server URL for just this run
+  claude-remote -s <url>            Shorthand for --server
+
+Examples:
+  claude-remote --server wss://abc123.ngrok-free.app/ws
+`)
+}
 
 async function main() {
-  if (process.argv[2] === 'setup') {
-    resetSetup()
-    console.log('Setup cleared — run `claude-remote-runner` again to reconfigure.')
+  const { serverOverride, command } = parseArgs(process.argv.slice(2))
+
+  if (command === 'help') {
+    printHelp()
     process.exit(0)
   }
 
-  const config = await loadConfig()
+  if (command === 'setup') {
+    resetSetup()
+    console.log('Setup cleared — run `claude-remote` again to reconfigure.')
+    process.exit(0)
+  }
+
+  const config = await loadConfig({ serverOverride })
   const token = await ensureAuthToken(config.httpBaseUrl)
 
-  startExecutor({
+  await startExecutor({
     serverUrl: config.serverUrl,
     token,
     runnerId: config.runnerId,
@@ -32,10 +73,11 @@ async function main() {
       sessionId,
       name: config.name,
       root: config.root,
+      overrideSource: config.overrideSource,
     })
   } else {
-    console.log(`claude-remote runner connected as "${config.name}" — root: ${config.root}`)
-    console.log('Running in the background (no TTY). Ctrl+C to stop.')
+    console.log(`claude-remote connected as "${config.name}" — root: ${config.root}`)
+    console.log(dim('Running in the background (no TTY). Ctrl+C to stop.'))
   }
 }
 

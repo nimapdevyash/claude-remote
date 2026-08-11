@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "bin": {
-    "claude-remote-runner": "src/index.js"
+    "claude-remote": "src/index.js"
   },
   "scripts": {
     "start": "node src/index.js"

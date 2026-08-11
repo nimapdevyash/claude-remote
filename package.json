@@ -2,6 +2,7 @@
   "name": "claude-remote",
   "private": true,
   "version": "0.1.0",
+  "type": "module",
   "workspaces": [
     "server",
     "client",
@@ -12,6 +13,7 @@
     "dev": "concurrently -n server,client -c blue,magenta \"npm run dev -w server\" \"npm run dev -w client\"",
     "build": "npm run build -w client",
     "start": "npm run start -w server",
+    "serve:public": "node scripts/serve-public.js",
     "runner": "npm run start -w runner",
     "docs:dev": "npm run dev -w docs",
     "docs:build": "npm run build -w docs"

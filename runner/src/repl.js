@@ -1,6 +1,6 @@
 import WebSocket from 'ws'
 import { prompt } from './prompt.js'
-import { createTurnPrinter, printBanner, printError, dim } from './renderer.js'
+import { createTurnPrinter, printBanner, printError, dim, PROMPT_SYMBOL } from './renderer.js'
 
 async function authedFetch(httpBaseUrl, token, urlPath, options = {}) {
   return fetch(`${httpBaseUrl}${urlPath}`, {
@@ -17,7 +17,7 @@ async function authedFetch(httpBaseUrl, token, urlPath, options = {}) {
 // normal (non-runner-role) WebSocket subscription to one session and drives
 // it from a `>` prompt, so sitting at this machine feels like running
 // `claude` locally even though the reasoning happens on the server's login.
-export async function startRepl({ serverUrl, httpBaseUrl, token, sessionId, name, root }) {
+export async function startRepl({ serverUrl, httpBaseUrl, token, sessionId, name, root, overrideSource }) {
   let currentTurnId = null
   let printEvent = null
   let resolveTurn = null
@@ -58,10 +58,10 @@ export async function startRepl({ serverUrl, httpBaseUrl, token, sessionId, name
     process.exit(1)
   })
 
-  printBanner({ name, root, sessionId })
+  printBanner({ name, root, sessionId, serverUrl, overrideSource })
 
   for (;;) {
-    const line = await prompt('> ')
+    const line = await prompt(PROMPT_SYMBOL)
     const text = line.trim()
     if (!text) continue
     if (text === 'exit' || text === 'quit') break

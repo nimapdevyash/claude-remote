@@ -29,7 +29,7 @@ curl -fsSL https://raw.githubusercontent.com/nimapdevyash/claude-remote/main/ins
 iwr https://raw.githubusercontent.com/nimapdevyash/claude-remote/main/install.ps1 -useb | iex
 ```
 
-Then run `claude-remote-runner` — first run walks you through server URL,
+Then run `claude-remote` — first run walks you through server URL,
 folder, name, and sign-in.
 
 ## Run the server + web UI
@@ -43,10 +43,19 @@ npm run create-account -w server   # set your sign-in username/password
 npm run dev                         # server on :4317, web UI on :5173
 ```
 
-See the [Quickstart](https://nimapdevyash.github.io/claude-remote/guide/quickstart)
-for the production build/deploy steps, and
-[Auth & security](https://nimapdevyash.github.io/claude-remote/guide/security)
-before exposing it over the internet.
+To get a public URL instead of localhost (via [ngrok](https://ngrok.com),
+already installed and authenticated):
+
+```bash
+npm run serve:public
+```
+
+This builds the client, starts the server, opens the tunnel, and prints
+the public URL — plus the exact `claude-remote --server wss://...` command
+to point a runner CLI at it for that run, without overwriting its saved
+default. See [Exposing it remotely](https://nimapdevyash.github.io/claude-remote/guide/remote-access)
+and [Auth & security](https://nimapdevyash.github.io/claude-remote/guide/security)
+before you do.
 
 ## Repo layout
 

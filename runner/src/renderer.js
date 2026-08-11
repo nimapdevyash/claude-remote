@@ -1,7 +1,8 @@
 const isTTY = process.stdout.isTTY
 
+const ESC = String.fromCharCode(27)
 function style(code, text) {
-  return isTTY ? `[${code}m${text}[0m` : text
+  return isTTY ? `${ESC}[${code}m${text}${ESC}[0m` : text
 }
 const dim = (t) => style(2, t)
 const bold = (t) => style(1, t)
@@ -51,6 +52,30 @@ function truncate(text, max = 400) {
   return clean.length > max ? `${clean.slice(0, max)}…` : clean
 }
 
+// --- Shared "design system" for the CLI's terminal output -----------------
+
+const RULE_WIDTH = 52
+
+export function printDivider() {
+  console.log(dim('─'.repeat(RULE_WIDTH)))
+}
+
+export function printHeader(title) {
+  console.log(`\n${bold(accent(`◆ ${title}`))}`)
+}
+
+// Aligned "label   value" rows, e.g. connection details in the chat banner.
+export function printKeyValue(pairs) {
+  const width = Math.max(...pairs.map(([label]) => label.length))
+  for (const [label, value] of pairs) {
+    console.log(`  ${dim(label.padEnd(width))}  ${value}`)
+  }
+}
+
+export const PROMPT_SYMBOL = `${accent('❯')} `
+
+// --- Turn/event rendering --------------------------------------------------
+
 // Creates a stateful printer for one turn's stream of raw claude-code
 // events, rendering them incrementally in the same visual style as the
 // real `claude` CLI (● Tool: summary lines, plain assistant text).
@@ -87,15 +112,26 @@ export function createTurnPrinter() {
   }
 }
 
-export function printBanner({ name, root, sessionId }) {
-  console.log(`\n${bold('claude-remote')} — connected as ${accent(`"${name}"`)}`)
-  console.log(`${dim('root:')} ${root}`)
-  console.log(`${dim('session:')} ${sessionId}`)
-  console.log(dim('\nType a task and press Enter. Ctrl+C or "exit" to quit.\n'))
+export function printBanner({ name, root, sessionId, serverUrl, overrideSource }) {
+  printHeader('claude-remote')
+  const serverLine = overrideSource ? `${serverUrl}  ${dim(`(${overrideSource}, not saved)`)}` : serverUrl
+  printKeyValue([
+    ['connected as', accent(`"${name}"`)],
+    ['server', serverLine],
+    ['root', root],
+    ['session', dim(sessionId)],
+  ])
+  console.log()
+  printDivider()
+  console.log(dim('Type a task and press Enter.  Ctrl+C or "exit" to quit.\n'))
 }
 
 export function printError(message) {
   console.log(red(message))
 }
 
-export { green, dim }
+export function printSuccess(message) {
+  console.log(green(message))
+}
+
+export { green, red, dim, bold, accent }

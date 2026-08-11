@@ -2,7 +2,7 @@ import fs from 'fs'
 import os from 'os'
 import path from 'path'
 
-const MAP_PATH = path.join(os.homedir(), '.claude-remote-runner', 'chat-session.json')
+const MAP_PATH = path.join(os.homedir(), '.claude-remote', 'chat-session.json')
 
 function loadSavedId() {
   try {
@@ -29,7 +29,7 @@ async function authedFetch(httpBaseUrl, token, path, options = {}) {
   return res
 }
 
-// Reuses the same chat session across CLI restarts (so `claude-remote-runner`
+// Reuses the same chat session across CLI restarts (so `claude-remote`
 // feels like resuming a conversation, not starting fresh every time) by
 // remembering the session id locally and re-validating it still exists.
 export async function ensureChatSession(httpBaseUrl, token, runnerId, name) {

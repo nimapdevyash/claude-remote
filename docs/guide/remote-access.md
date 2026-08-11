@@ -1,22 +1,50 @@
 # Exposing it remotely
 
-The server only needs one port exposed (`PORT`, default `4317`) once
-you've run the production build — that single process serves the web UI,
-the REST API, and the WebSocket (both browser clients and runner CLIs
-connect to the same port).
+## One command
 
 ```bash
-npm run build
-npm start
-ngrok http 4317
+npm run serve:public
 ```
 
-Open the `https://*.ngrok-free.app` URL ngrok gives you from your phone or
-another laptop and sign in with your account.
+This builds the client, starts the production server, opens an ngrok
+tunnel to it, and prints the public URL — no localhost address, no manual
+`ngrok http` in a separate terminal. Requires the `ngrok` CLI already
+installed and authenticated (`ngrok config add-authtoken <token>`, from
+your ngrok dashboard). Ctrl+C stops both the server and the tunnel
+together.
 
-A runner CLI can dial out to that same tunnel exactly like a browser does
-— just point its `SERVER_URL` at the tunnel's `wss://` address (either via
-`claude-remote-runner setup`, or `SERVER_URL` in `runner/.env`).
+It prints something like:
+
+```
+================================================================
+  claude-remote is live at: https://abc123.ngrok-free.app
+  (local: http://localhost:4317)
+
+  Point the runner CLI at this tunnel for just this run:
+    claude-remote --server wss://abc123.ngrok-free.app/ws
+================================================================
+```
+
+Open that `https://` URL from your phone or another laptop and sign in
+with your account.
+
+## Pointing the runner CLI at a tunnel
+
+`claude-remote setup` saves a server URL permanently — fine for a stable
+address, but ngrok's free tier gives you a new random URL every time you
+restart it. Instead of re-running setup each time, override it for just
+one run:
+
+```bash
+claude-remote --server wss://abc123.ngrok-free.app/ws
+# or the short form:
+claude-remote -s wss://abc123.ngrok-free.app/ws
+```
+
+This takes priority over both the saved config and the `SERVER_URL`
+env var, and — unlike the setup prompts — is never written to
+`~/.claude-remote/config.json`, so your saved default (e.g. a stable
+local address) is untouched for next time.
 
 ## Notes
 

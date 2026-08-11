@@ -2,7 +2,7 @@
 #
 #   iwr https://raw.githubusercontent.com/nimapdevyash/claude-remote/main/install.ps1 -useb | iex
 #
-# Checks for Node.js, fetches the runner CLI, and puts a claude-remote-runner
+# Checks for Node.js, fetches the runner CLI, and puts a claude-remote
 # command on your PATH. Only touches %USERPROFILE%\.claude-remote and
 # %USERPROFILE%\.local\bin (plus your User PATH, with a message telling you so).
 
@@ -13,7 +13,7 @@ $ArchiveUrl = "https://github.com/nimapdevyash/claude-remote/archive/refs/heads/
 $InstallDir = Join-Path $env:USERPROFILE ".claude-remote"
 $AppDir = Join-Path $InstallDir "app"
 $BinDir = Join-Path $env:USERPROFILE ".local\bin"
-$WrapperPath = Join-Path $BinDir "claude-remote-runner.cmd"
+$WrapperPath = Join-Path $BinDir "claude-remote.cmd"
 
 function Info($msg) { Write-Host "==> $msg" -ForegroundColor Cyan }
 function Warn($msg) { Write-Host "!! $msg" -ForegroundColor Yellow }
@@ -33,14 +33,12 @@ function Test-NodeVersion {
 function Get-App {
   New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
 
-  if (Test-Path (Join-Path $AppDir ".git")) {
-    Info "Updating existing install in $AppDir"
-    git -C $AppDir fetch --depth=1 origin main
-    git -C $AppDir reset --hard origin/main
-    return
+  # Always a clean reinstall - never an incremental update - so re-running
+  # this exact command is the answer to "how do I get a fresh copy."
+  if (Test-Path $AppDir) {
+    Info "Removing existing install at $AppDir"
+    Remove-Item -Recurse -Force $AppDir
   }
-
-  if (Test-Path $AppDir) { Remove-Item -Recurse -Force $AppDir }
 
   $git = Get-Command git -ErrorAction SilentlyContinue
   if ($git) {
@@ -96,9 +94,9 @@ Write-Host ""
 Info "Installed: $WrapperPath"
 Write-Host ""
 if ($alreadyOnPath) {
-  Info "Run it with: claude-remote-runner"
+  Info "Run it with: claude-remote"
 } else {
-  Info "Open a new terminal, then run: claude-remote-runner"
+  Info "Open a new terminal, then run: claude-remote"
 }
 Write-Host ""
 Info "First run will walk you through server URL, folder, name, and sign-in."

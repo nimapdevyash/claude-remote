@@ -4,10 +4,11 @@ import path from 'path'
 import crypto from 'crypto'
 import dotenv from 'dotenv'
 import { prompt } from './prompt.js'
+import { printHeader } from './renderer.js'
 
 dotenv.config()
 
-const STATE_DIR = path.join(os.homedir(), '.claude-remote-runner')
+const STATE_DIR = path.join(os.homedir(), '.claude-remote')
 const ID_PATH = path.join(STATE_DIR, 'id')
 const SETUP_PATH = path.join(STATE_DIR, 'config.json')
 
@@ -45,17 +46,25 @@ function toHttpBaseUrl(serverUrl) {
   return serverUrl.replace(/^ws/, 'http').replace(/\/ws\/?$/, '')
 }
 
-// Env vars win when set (headless/CI use); otherwise fall back to a
-// persisted first-run setup, prompting interactively for anything missing
-// and saving it so subsequent runs are silent.
-export async function loadConfig() {
+// Priority for the server URL: --server flag > SERVER_URL env var > saved
+// config > interactive prompt. Only the prompted value is ever persisted —
+// a flag or env var is meant to be a one-off override (e.g. a fresh ngrok
+// URL) and shouldn't silently overwrite what's saved for next time.
+export async function loadConfig({ serverOverride } = {}) {
   const saved = loadSetup()
-  let { SERVER_URL, ROOT, NAME } = process.env
+  const { SERVER_URL, ROOT, NAME } = process.env
   let changed = false
 
-  let serverUrl = SERVER_URL?.trim() || saved.serverUrl
+  const overrideSource = serverOverride?.trim()
+    ? '--server flag'
+    : SERVER_URL?.trim()
+      ? 'SERVER_URL env var'
+      : null
+
+  let serverUrl = serverOverride?.trim() || SERVER_URL?.trim() || saved.serverUrl
   if (!serverUrl) {
-    console.log("\nFirst-time setup — this only happens once (saved to ~/.claude-remote-runner/config.json).\n")
+    printHeader('First-time setup')
+    console.log('This only happens once — saved to ~/.claude-remote/config.json\n')
     serverUrl = await prompt('Server WebSocket URL [ws://localhost:4317/ws]: ')
     serverUrl = serverUrl || 'ws://localhost:4317/ws'
     changed = true
@@ -78,7 +87,7 @@ export async function loadConfig() {
 
   if (changed) {
     saveSetup({ serverUrl, root, name })
-    console.log('Saved. Run `npx claude-remote-runner setup` any time to change these.\n')
+    console.log('Saved. Run `claude-remote setup` any time to change these.\n')
   }
 
   return {
@@ -87,6 +96,7 @@ export async function loadConfig() {
     root,
     name,
     runnerId: ensureRunnerId(),
+    overrideSource,
   }
 }
 
