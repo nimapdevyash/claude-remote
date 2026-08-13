@@ -1,5 +1,7 @@
+import fs from 'fs'
 import path from 'path'
 import { Router } from 'express'
+import multer from 'multer'
 import { nanoid } from 'nanoid'
 import { store } from '../store.js'
 import { config } from '../config.js'
@@ -11,6 +13,23 @@ import { runnerHub } from '../runnerHub.js'
 export const sessionsRouter = Router()
 
 const runningProcesses = new Map() // sessionId -> child process
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 25 * 1024 * 1024 } })
+
+// multer's own error path (oversized file, malformed multipart body) would
+// otherwise fall through to express's default HTML error page — surface it
+// as the same JSON shape every other route uses instead.
+function uploadSingle(req, res, next) {
+  upload.single('file')(req, res, (err) => {
+    if (err) return res.status(400).json({ error: err.message })
+    next()
+  })
+}
+
+function sanitizeFilename(name) {
+  const cleaned = path.basename(String(name || 'file')).replace(/[^a-zA-Z0-9._-]/g, '_')
+  return cleaned || 'file'
+}
 
 function summarize(session) {
   const lastTurn = session.turns[session.turns.length - 1]
@@ -80,6 +99,41 @@ sessionsRouter.get('/:id', (req, res) => {
   const session = store.getSession(req.params.id)
   if (!session) return res.status(404).json({ error: 'Not found' })
   res.json(session)
+})
+
+// Saves an uploaded file next to the session's target filesystem (never the
+// browser's) so a later turn can Read it by path. Files land in a dedicated
+// .claude-remote-uploads/<sessionId>/ folder — not the session's own cwd —
+// so a drag-and-dropped screenshot never lands inside the user's own project.
+sessionsRouter.post('/:id/uploads', uploadSingle, async (req, res) => {
+  const session = store.getSession(req.params.id)
+  if (!session) return res.status(404).json({ error: 'Not found' })
+  if (!req.file) return res.status(400).json({ error: 'file is required' })
+
+  const safeName = sanitizeFilename(req.file.originalname)
+  const relPath = path.posix.join('.claude-remote-uploads', session.id, `${nanoid(8)}-${safeName}`)
+  const target = session.target || { type: 'local' }
+
+  try {
+    if (target.type === 'runner') {
+      if (!runnerHub.isConnected(target.runnerId)) {
+        return res.status(409).json({ error: 'Runner is not connected' })
+      }
+      await runnerHub.sendRequest(target.runnerId, 'write_file', {
+        path: relPath,
+        content: req.file.buffer.toString('base64'),
+        encoding: 'base64',
+      })
+      return res.json({ path: relPath })
+    }
+
+    const abs = resolveWorkspacePath(relPath)
+    fs.mkdirSync(path.dirname(abs), { recursive: true })
+    fs.writeFileSync(abs, req.file.buffer)
+    res.json({ path: abs })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
 })
 
 sessionsRouter.delete('/:id', (req, res) => {

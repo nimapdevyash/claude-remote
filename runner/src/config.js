@@ -46,10 +46,16 @@ function toHttpBaseUrl(serverUrl) {
   return serverUrl.replace(/^ws/, 'http').replace(/\/ws\/?$/, '')
 }
 
-// Priority for the server URL: --server flag > SERVER_URL env var > saved
-// config > interactive prompt. Only the prompted value is ever persisted —
-// a flag or env var is meant to be a one-off override (e.g. a fresh ngrok
-// URL) and shouldn't silently overwrite what's saved for next time.
+// The server URL is deliberately NEVER saved/reused — it's typically an
+// ngrok-style tunnel URL that changes basically every time the server is
+// restarted, so a cached "default" would just go stale and silently point
+// at a dead tunnel. Every run takes it fresh: --server flag > SERVER_URL
+// env var > interactive prompt (looped until non-empty — no fallback
+// default to silently fall back on here either).
+//
+// Folder and display name are the opposite: they describe this machine
+// itself and don't change run to run, so those still get asked once and
+// persisted to ~/.claude-remote/config.json.
 //
 // `minimal: true` (used by `admin` subcommands) skips the root/name
 // prompts entirely — those describe this machine's executor, which admin
@@ -65,19 +71,20 @@ export async function loadConfig({ serverOverride, minimal = false } = {}) {
       ? 'SERVER_URL env var'
       : null
 
-  let serverUrl = serverOverride?.trim() || SERVER_URL?.trim() || saved.serverUrl
-  if (!serverUrl) {
-    printHeader('First-time setup')
-    console.log('This only happens once — saved to ~/.claude-remote/config.json\n')
-    serverUrl = await prompt('Server WebSocket URL [ws://localhost:4317/ws]: ')
-    serverUrl = serverUrl || 'ws://localhost:4317/ws'
-    changed = true
+  let serverUrl = serverOverride?.trim() || SERVER_URL?.trim() || ''
+  while (!serverUrl) {
+    serverUrl = (await prompt('Server WebSocket URL: ')).trim()
   }
 
   let root = ROOT?.trim() || saved.root
   let name = NAME?.trim() || saved.name
 
   if (!minimal) {
+    if (!root || !name) {
+      printHeader('First-time setup')
+      console.log('Folder and display name only need to be set once — saved to ~/.claude-remote/config.json\n')
+    }
+
     if (!root) {
       const answer = await prompt(`Folder Claude Code may work in on this machine [${os.homedir()}]: `)
       root = answer || os.homedir()
@@ -93,7 +100,7 @@ export async function loadConfig({ serverOverride, minimal = false } = {}) {
   }
 
   if (changed) {
-    saveSetup({ serverUrl, root, name })
+    saveSetup({ root, name })
     console.log('Saved. Run `claude-remote setup` any time to change these.\n')
   }
 

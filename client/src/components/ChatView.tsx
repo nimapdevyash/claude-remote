@@ -222,7 +222,7 @@ export function ChatView({ sessionId, onActivity }: Props) {
       </div>
 
       {sendError && <p className="px-6 pb-1 text-xs text-bad-500">{sendError}</p>}
-      <Composer disabled={running} onSend={handleSend} />
+      <Composer disabled={running} sessionId={sessionId} onSend={handleSend} />
     </div>
   )
 }

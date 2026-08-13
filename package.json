@@ -14,6 +14,7 @@
     "build": "npm run build -w client",
     "start": "npm run start -w server",
     "serve:public": "node scripts/serve-public.js",
+    "cli": "npm run start -w runner",
     "runner": "npm run start -w runner",
     "docs:dev": "npm run dev -w docs",
     "docs:build": "npm run build -w docs"

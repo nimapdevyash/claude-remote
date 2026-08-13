@@ -86,19 +86,72 @@ export function printCommandHelp(entries) {
   }
 }
 
+// --- "Thinking" spinner ----------------------------------------------------
+
+// The real `claude` CLI fills the gap between your prompt and its first
+// token with an animated status line — a spinner, a random present-participle
+// verb, and an elapsed timer — so it's visually obvious it's working, not
+// hung. This is the same idea, redrawn in place on one line.
+const SPINNER_FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+const THINKING_WORDS = [
+  'Pondering', 'Noodling', 'Percolating', 'Marinating', 'Ruminating',
+  'Contemplating', 'Cogitating', 'Puzzling', 'Deliberating', 'Mulling',
+  'Synthesizing', 'Conjuring', 'Scheming', 'Wrangling', 'Untangling',
+  'Divining', 'Churning', 'Brewing',
+]
+
+export function createSpinner() {
+  let timer = null
+  let frame = 0
+  let startedAt = 0
+  let word = THINKING_WORDS[0]
+  let active = false
+
+  function render() {
+    const elapsed = Math.floor((Date.now() - startedAt) / 1000)
+    const line = `${accent(SPINNER_FRAMES[frame % SPINNER_FRAMES.length])} ${dim(`${word}… (${elapsed}s)`)}`
+    process.stdout.write(`\r\x1b[K${line}`)
+    frame++
+  }
+
+  return {
+    start() {
+      if (active || !isTTY) return
+      active = true
+      startedAt = Date.now()
+      word = THINKING_WORDS[Math.floor(Math.random() * THINKING_WORDS.length)]
+      frame = 0
+      render()
+      timer = setInterval(render, 120)
+    },
+    stop() {
+      if (!active) return
+      active = false
+      clearInterval(timer)
+      timer = null
+      process.stdout.write('\r\x1b[K')
+    },
+  }
+}
+
 // --- Turn/event rendering --------------------------------------------------
 
 // Creates a stateful printer for one turn's stream of raw claude-code
 // events, rendering them incrementally in the same visual style as the
-// real `claude` CLI (● Tool: summary lines, plain assistant text).
-export function createTurnPrinter() {
+// real `claude` CLI (● Tool: summary lines, ◆-marked assistant text so it
+// reads as distinctly "Claude talking" next to your own ❯-prefixed prompt
+// and any ✗ tool failures). `spinner` (optional) is paused for the instant
+// a line is printed and resumed right after, so it never overlaps output.
+export function createTurnPrinter(spinner) {
   const pendingByToolId = new Map()
 
   return function handleEvent(event) {
+    spinner?.stop()
+
     if (event.type === 'assistant' && Array.isArray(event.message?.content)) {
       for (const part of event.message.content) {
         if (part.type === 'text' && part.text) {
-          console.log(`\n${part.text}`)
+          console.log(`\n${accent('◆')} ${part.text}`)
         } else if (part.type === 'tool_use') {
           pendingByToolId.set(part.id, part)
           console.log(`${accent('●')} ${bold(toolLabel(part.name))}: ${dim(toolSummary(part.name, part.input))}`)
@@ -121,12 +174,14 @@ export function createTurnPrinter() {
     } else if (event.type === 'raw_text') {
       console.log(red(event.text))
     }
+
+    if (event.type !== 'result') spinner?.start()
   }
 }
 
 export function printBanner({ name, root, sessionId, serverUrl, overrideSource }) {
   printHeader('claude-remote')
-  const serverLine = overrideSource ? `${serverUrl}  ${dim(`(${overrideSource}, not saved)`)}` : serverUrl
+  const serverLine = overrideSource ? `${serverUrl}  ${dim(`(via ${overrideSource})`)}` : serverUrl
   printKeyValue([
     ['connected as', accent(`"${name}"`)],
     ['server', serverLine],

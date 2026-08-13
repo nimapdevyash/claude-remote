@@ -68,6 +68,16 @@ if (fs.existsSync(clientDist)) {
 const server = http.createServer(app)
 const wss = new WebSocketServer({ server, path: '/ws' })
 
+// Idle WebSocket connections routinely get silently dropped by NAT
+// gateways, mobile carriers, and tunnels (ngrok included) well before any
+// timeout we could configure ourselves — commonly within 30-60s of no
+// traffic. Rather than chase a bigger timeout number, we just never let
+// the connection go idle: ping everyone every 25s (comfortably under that
+// window) and drop anyone who stops answering, so a live connection stays
+// live indefinitely and a truly dead one is noticed within one interval
+// instead of surfacing as a mystery hang.
+const HEARTBEAT_INTERVAL_MS = 25_000
+
 wss.on('connection', (ws, req) => {
   const url = new URL(req.url, 'http://localhost')
   const token = url.searchParams.get('token')
@@ -75,6 +85,11 @@ wss.on('connection', (ws, req) => {
     ws.close(4401, 'unauthorized')
     return
   }
+
+  ws.isAlive = true
+  ws.on('pong', () => {
+    ws.isAlive = true
+  })
 
   if (url.searchParams.get('role') === 'runner') {
     const runnerId = url.searchParams.get('runnerId')
@@ -124,6 +139,19 @@ wss.on('connection', (ws, req) => {
     wsHub.leaveAll(ws)
   })
 })
+
+const heartbeat = setInterval(() => {
+  for (const ws of wss.clients) {
+    if (ws.isAlive === false) {
+      ws.terminate()
+      continue
+    }
+    ws.isAlive = false
+    ws.ping()
+  }
+}, HEARTBEAT_INTERVAL_MS)
+
+wss.on('close', () => clearInterval(heartbeat))
 
 server.listen(config.port, () => {
   console.log(`\n  claude-remote server listening on http://localhost:${config.port}\n`)

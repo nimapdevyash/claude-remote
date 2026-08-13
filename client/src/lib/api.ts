@@ -85,6 +85,21 @@ export const api = {
       body: JSON.stringify({ prompt }),
     })
   },
+  async uploadFile(id: string, file: File): Promise<{ path: string }> {
+    const token = getToken()
+    const form = new FormData()
+    form.append('file', file)
+    const res = await fetch(`/api/sessions/${id}/uploads`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      body: form,
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      throw new ApiError(res.status, body.error || 'Upload failed')
+    }
+    return res.json()
+  },
   stopTurn(id: string) {
     return request<{ ok: true }>(`/sessions/${id}/stop`, { method: 'POST' })
   },

@@ -24,12 +24,13 @@ export function createActions(root) {
       return { content }
     },
 
-    async write_file({ path: relPath, content }) {
+    async write_file({ path: relPath, content, encoding }) {
       if (!relPath) throw new Error('path is required')
       const target = resolveSafe(root, relPath)
       fs.mkdirSync(path.dirname(target), { recursive: true })
-      fs.writeFileSync(target, content ?? '')
-      return { bytes: Buffer.byteLength(content ?? '') }
+      const buf = encoding === 'base64' ? Buffer.from(content ?? '', 'base64') : Buffer.from(content ?? '', 'utf-8')
+      fs.writeFileSync(target, buf)
+      return { bytes: buf.length }
     },
 
     async edit_file({ path: relPath, old_string, new_string, replace_all }) {
