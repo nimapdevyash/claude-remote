@@ -8,8 +8,16 @@ const dim = (t) => style(2, t)
 const bold = (t) => style(1, t)
 const green = (t) => style(32, t)
 const red = (t) => style(31, t)
+const yellow = (t) => style(33, t)
+const blue = (t) => style(34, t)
 const accent = (t) => style(35, t)
 const cyan = (t) => style(36, t)
+
+// Strips SGR escape sequences so box/table padding measures the actual
+// printable width of an already-styled string, not its raw character count.
+function visibleLength(str) {
+  return str.replace(/\x1b\[[0-9;]*m/g, '').length
+}
 
 const TOOL_SUMMARY = {
   Bash: (i) => i.command,
@@ -54,23 +62,64 @@ function truncate(text, max = 400) {
 }
 
 // --- Shared "design system" for the CLI's terminal output -----------------
+//
+// Modeled on nala's terminal aesthetic: rounded-border panels and tables
+// for anything that's genuinely structured (connection info, account
+// lists), rather than every line getting its own decoration — loose
+// status lines stay plain and colored so the boxed panels keep standing
+// out as "the important thing to read right now."
 
 const RULE_WIDTH = 52
-
-export function printDivider() {
-  console.log(dim('─'.repeat(RULE_WIDTH)))
-}
+const BOX = { tl: '╭', tr: '╮', bl: '╰', br: '╯', h: '─', v: '│', ml: '├', mr: '┤', mm: '┼' }
 
 export function printHeader(title) {
   console.log(`\n${bold(accent(`◆ ${title}`))}`)
 }
 
-// Aligned "label   value" rows, e.g. connection details in the chat banner.
-export function printKeyValue(pairs) {
-  const width = Math.max(...pairs.map(([label]) => label.length))
-  for (const [label, value] of pairs) {
-    console.log(`  ${dim(label.padEnd(width))}  ${value}`)
+// A single rounded panel with the title inlined into the top border, e.g.
+//   ╭─ claude-remote ──────────────╮
+//   │ connected as  "yashs-laptop" │
+//   ╰───────────────────────────────╯
+// `lines` may already contain ANSI styling — width is measured on the
+// visible text only, so colored values still line up.
+export function printBox(title, lines, { color = accent, minWidth = RULE_WIDTH } = {}) {
+  const contentWidth = Math.max(minWidth, ...lines.map(visibleLength))
+  const titleLabel = ` ${title} `
+  const fill = Math.max(0, contentWidth + 1 - visibleLength(titleLabel))
+  console.log(color(BOX.tl + BOX.h) + bold(color(titleLabel)) + color(BOX.h.repeat(fill)) + color(BOX.tr))
+  for (const line of lines) {
+    const pad = ' '.repeat(Math.max(0, contentWidth - visibleLength(line)))
+    console.log(`${color(BOX.v)} ${line}${pad} ${color(BOX.v)}`)
   }
+  console.log(color(BOX.bl + BOX.h.repeat(contentWidth + 2) + BOX.br))
+}
+
+// A bordered table with a header row, e.g.
+//   ╭──────────┬───────╮
+//   │ Username │ Role  │
+//   ├──────────┼───────┤
+//   │ yash     │ admin │
+//   ╰──────────┴───────╯
+export function printTable(headers, rows, { color = accent } = {}) {
+  const widths = headers.map((h, i) =>
+    Math.max(visibleLength(h), ...rows.map((r) => visibleLength(String(r[i] ?? '')))),
+  )
+  const border = (l, m, r) => color(l) + widths.map((w) => color(BOX.h.repeat(w + 2))).join(color(m)) + color(r)
+  const row = (cells, cellStyle = (s) => s) =>
+    color(BOX.v) +
+    cells
+      .map((c, i) => {
+        const text = String(c ?? '')
+        return ` ${cellStyle(text)}${' '.repeat(widths[i] - visibleLength(text))} `
+      })
+      .join(color(BOX.v)) +
+    color(BOX.v)
+
+  console.log(border(BOX.tl, '┬', BOX.tr))
+  console.log(row(headers, (s) => bold(s)))
+  console.log(border(BOX.ml, BOX.mm, BOX.mr))
+  for (const r of rows) console.log(row(r))
+  console.log(border(BOX.bl, '┴', BOX.br))
 }
 
 export const PROMPT_SYMBOL = `${bold(accent('❯'))} `
@@ -110,7 +159,7 @@ export function createSpinner() {
 
   function render() {
     const elapsed = Math.floor((Date.now() - startedAt) / 1000)
-    const line = `${accent(SPINNER_FRAMES[frame % SPINNER_FRAMES.length])} ${dim(`${word}… (${elapsed}s)`)}`
+    const line = `${yellow(SPINNER_FRAMES[frame % SPINNER_FRAMES.length])} ${dim(`${word}… (${elapsed}s)`)}`
     process.stdout.write(`\r\x1b[K${line}`)
     frame++
   }
@@ -139,12 +188,14 @@ export function createSpinner() {
 
 // Creates a stateful printer for one turn's stream of raw claude-code
 // events, rendering them incrementally in the same visual style as the
-// real `claude` CLI (● Tool: summary lines, ◆-marked assistant text). The
-// assistant marker is deliberately a different color (cyan) than the
-// magenta ❯ you type your own prompt with, and any ✗ tool failures, so a
-// glance at the left margin is enough to tell who's "talking" on any given
-// line. `spinner` (optional) is paused for the instant a line is printed
-// and resumed right after, so it never overlaps output.
+// real `claude` CLI (● Tool: summary lines, ◆-marked assistant text). Each
+// kind of line gets its own color — magenta ❯ for your own prompt, cyan ◆
+// for Claude's text, yellow ● for a tool in flight, red ✗ for a failure —
+// so the left margin alone tells you who's "talking" on any given line,
+// the same multi-hue-by-role language nala uses (green for new packages,
+// yellow for upgrades, red for removals). `spinner` (optional) is paused
+// for the instant a line is printed and resumed right after, so it never
+// overlaps output.
 export function createTurnPrinter(spinner) {
   const pendingByToolId = new Map()
 
@@ -157,7 +208,7 @@ export function createTurnPrinter(spinner) {
           console.log(`\n${bold(cyan('◆'))} ${part.text}`)
         } else if (part.type === 'tool_use') {
           pendingByToolId.set(part.id, part)
-          console.log(`${accent('●')} ${bold(toolLabel(part.name))}: ${dim(toolSummary(part.name, part.input))}`)
+          console.log(`${yellow('●')} ${bold(toolLabel(part.name))}: ${dim(toolSummary(part.name, part.input))}`)
         }
       }
     } else if (event.type === 'user' && Array.isArray(event.message?.content)) {
@@ -173,7 +224,7 @@ export function createTurnPrinter(spinner) {
       if (typeof event.total_cost_usd === 'number') bits.push(`$${event.total_cost_usd.toFixed(4)}`)
       if (typeof event.duration_ms === 'number') bits.push(`${(event.duration_ms / 1000).toFixed(1)}s`)
       if (event.num_turns != null) bits.push(`${event.num_turns} turn${event.num_turns === 1 ? '' : 's'}`)
-      console.log(`\n${dim(bits.join(' · '))}\n`)
+      console.log(`\n${green('✓')} ${dim(bits.join(' · '))}\n`)
     } else if (event.type === 'raw_text') {
       console.log(red(event.text))
     }
@@ -183,17 +234,18 @@ export function createTurnPrinter(spinner) {
 }
 
 export function printBanner({ name, root, sessionId, serverUrl, overrideSource }) {
-  printHeader('claude-remote')
   const serverLine = overrideSource ? `${serverUrl}  ${dim(`(via ${overrideSource})`)}` : serverUrl
-  printKeyValue([
+  const rows = [
     ['connected as', accent(`"${name}"`)],
     ['server', serverLine],
     ['root', root],
     ['session', dim(sessionId)],
-  ])
+  ]
+  const labelWidth = Math.max(...rows.map(([label]) => label.length))
+  const lines = rows.map(([label, value]) => `${dim(label.padEnd(labelWidth))}  ${value}`)
   console.log()
-  printDivider()
-  console.log(dim('Type a task and press Enter.  Ctrl+C or "exit" to quit.\n'))
+  printBox('claude-remote', lines)
+  console.log(dim('\nType a task and press Enter.  Ctrl+C or "exit" to quit.\n'))
 }
 
 export function printError(message) {
@@ -204,4 +256,4 @@ export function printSuccess(message) {
   console.log(green(message))
 }
 
-export { green, red, dim, bold, accent, cyan }
+export { green, red, dim, bold, accent, cyan, yellow, blue }

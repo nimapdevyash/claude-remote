@@ -5,7 +5,7 @@ import { ensureChatSession } from './chatSession.js'
 import { startExecutor } from './executor.js'
 import { startRepl } from './repl.js'
 import { runAdminCommand } from './admin.js'
-import { dim, bold, printHeader, printCommandHelp } from './renderer.js'
+import { dim, bold, printBox, printCommandHelp } from './renderer.js'
 
 function parseArgs(argv) {
   let serverOverride = null
@@ -29,9 +29,12 @@ function parseArgs(argv) {
 }
 
 function printHelp() {
-  printHeader('claude-remote')
-  console.log("Run Claude Code from anywhere — reasoning happens on the server's")
-  console.log('login; execution happens wherever this CLI is running.\n')
+  console.log()
+  printBox('claude-remote', [
+    "Run Claude Code from anywhere — reasoning happens on the server's",
+    'login; execution happens wherever this CLI is running.',
+  ])
+  console.log()
 
   console.log(bold('Commands'))
   printCommandHelp([

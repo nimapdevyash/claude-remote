@@ -1,5 +1,5 @@
 import { promptHidden } from './prompt.js'
-import { printHeader, printSuccess, printError, dim } from './renderer.js'
+import { printTable, printSuccess, printError, dim, green } from './renderer.js'
 
 async function authedFetch(httpBaseUrl, token, urlPath, options = {}) {
   return fetch(`${httpBaseUrl}${urlPath}`, {
@@ -23,10 +23,11 @@ export async function runAdminCommand(httpBaseUrl, token, subcommand, args) {
       printError(body.error || 'Failed to list accounts')
       process.exit(1)
     }
-    printHeader('Accounts')
-    for (const { username, isAdmin } of body) {
-      console.log(`  ${username}${isAdmin ? dim('  (admin)') : ''}`)
-    }
+    console.log()
+    printTable(
+      ['Username', 'Role'],
+      body.map(({ username, isAdmin }) => [username, isAdmin ? green('admin') : dim('member')]),
+    )
     process.exit(0)
   }
 
