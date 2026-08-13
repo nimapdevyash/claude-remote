@@ -59,6 +59,32 @@ broadcasting over the exact same WebSocket protocol — which is why a
 browser tab and the runner CLI's own chat prompt can watch (or drive) the
 identical session without either one being a special case.
 
+## File uploads
+
+`POST /api/sessions/:id/uploads` (multipart, one file per request) is the
+one piece of the API that doesn't go through the `claude` process at all
+— it just needs the bytes to land on whichever filesystem the session
+targets, in `.claude-remote-uploads/<sessionId>/`, before the next turn
+starts:
+
+- **Local session** — written directly with `fs.writeFileSync`, through
+  the same `resolveWorkspacePath` guard every other local-filesystem route
+  uses.
+- **Runner-targeted session** — sent straight to `runnerHub.sendRequest`
+  as a `write_file` action, base64-encoded (`{ encoding: 'base64' }`).
+  This is the *same* action Claude's own `remote_write_file` MCP tool
+  calls — the runner-side handler in `runner/src/actions.js` just also
+  accepts an optional `encoding` now, decoding to a `Buffer` instead of
+  assuming UTF-8 text. No new request/response path, no new runner code
+  path to trust.
+
+Either way, the response is a path — absolute for local, relative to the
+runner's root for a runner target — meant to be typed or pasted into the
+next prompt so Claude's Read tool (or `remote_read_file`) picks it up
+exactly like any other file reference. See [Web UI](/guide/web-ui) and
+[Runner CLI](/guide/runner-cli) for the two ways a path actually gets
+there.
+
 ## Why not just SSH?
 
 MCP is the extension point Claude Code actually exposes for adding tools —

@@ -30,6 +30,7 @@ export default defineConfig({
           { text: 'Architecture', link: '/guide/architecture' },
           { text: 'Auth & security', link: '/guide/security' },
           { text: 'Exposing it remotely', link: '/guide/remote-access' },
+          { text: 'Decisions log', link: '/guide/decisions' },
         ],
       },
     ],

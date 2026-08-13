@@ -30,10 +30,10 @@ with your account.
 
 ## Pointing the runner CLI at a tunnel
 
-`claude-remote setup` saves a server URL permanently — fine for a stable
-address, but ngrok's free tier gives you a new random URL every time you
-restart it. Instead of re-running setup each time, override it for just
-one run:
+The server URL is never saved between runs in the first place — ngrok's
+free tier gives you a new random URL every time you restart it, so caching
+one would just mean silently pointing at a dead tunnel. Every run either
+prompts for it fresh or takes an override:
 
 ```bash
 claude-remote --server wss://abc123.ngrok-free.app/ws
@@ -41,10 +41,9 @@ claude-remote --server wss://abc123.ngrok-free.app/ws
 claude-remote -s wss://abc123.ngrok-free.app/ws
 ```
 
-This takes priority over both the saved config and the `SERVER_URL`
-env var, and — unlike the setup prompts — is never written to
-`~/.claude-remote/config.json`, so your saved default (e.g. a stable
-local address) is untouched for next time.
+`--server`/`-s` takes priority over the `SERVER_URL` env var, which takes
+priority over the interactive prompt. None of the three is ever written to
+`~/.claude-remote/config.json` — only the folder and display name are.
 
 ## Notes
 

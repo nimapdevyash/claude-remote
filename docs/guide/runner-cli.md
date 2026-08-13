@@ -37,15 +37,18 @@ chat history live separately (directly under `~/.claude-remote/`, not
 claude-remote
 ```
 
-The first run asks three questions once, and remembers your answers in
-`~/.claude-remote/config.json`:
+The first run asks three questions:
 
 1. **Server WebSocket URL** — `ws://<host>:4317/ws`, or `wss://...` through
-   a tunnel
+   a tunnel. This one is asked **every** run, never saved — it's typically
+   an ngrok-style tunnel URL that changes on restart, so caching it would
+   just mean silently pointing at a dead tunnel. Pass `--server`/`-s` or
+   set `SERVER_URL` to skip the prompt for a given run.
 2. **Folder** this machine's runner is confined to — every command and
    file path Claude Code sends it is resolved relative to this and can't
-   escape it
-3. **Display name** — how it shows up in the web UI's "Run on" picker
+   escape it. Asked once, remembered in `~/.claude-remote/config.json`.
+3. **Display name** — how it shows up in the web UI's "Run on" picker.
+   Also asked once and remembered.
 
 Then it signs you in (username/password — cached afterward at
 `~/.claude-remote/session`), connects, and drops you into a prompt:
@@ -76,8 +79,8 @@ closes it.
 
 ```
 claude-remote                    Connect and open the chat prompt
-claude-remote setup               Re-run first-time setup (server, root, name)
-claude-remote --server <url>      Use this server URL for just this run
+claude-remote setup               Re-run first-time setup (root, name — server URL is always asked fresh)
+claude-remote --server <url>      Skip the server URL prompt for this run
 claude-remote -s <url>            Shorthand for --server
 claude-remote --help              Show this
 
@@ -93,8 +96,44 @@ See [Auth & security](/guide/security) for how accounts and roles work.
 
 `--server`/`-s` is the one to reach for when you're tunneling with ngrok
 and get a fresh random URL each time — see
-[Exposing it remotely](/guide/remote-access) — since it overrides the
-saved server URL for a single run without touching what's saved.
+[Exposing it remotely](/guide/remote-access). Since the server URL is
+never saved in the first place, this just skips the interactive prompt for
+that one run; nothing needs "restoring" afterward.
+
+## Attaching files
+
+```
+❯ @fileupload ~/Pictures/screenshot.png notes/bug-report.txt
+  attached Pictures/screenshot.png
+  attached notes/bug-report.txt
+❯ take a look at these and tell me what's going wrong
+```
+
+Give `@fileupload` one or more paths — absolute or relative to `root` —
+and it checks each one exists and stays inside `root`, then holds onto it.
+Whatever you type next gets an "Attached file(s)" block appended listing
+every path you attached, and the list clears once that message actually
+sends.
+
+Bare `@fileupload` (no paths on the line) drops into a one-path-per-line
+prompt instead, so attaching a handful of files doesn't mean one very long
+command:
+
+```
+❯ @fileupload
+  Enter a file path, one per line. Blank line to finish.
+  path> ~/Pictures/screenshot.png
+  attached Pictures/screenshot.png
+  path>
+❯
+```
+
+Nothing is actually transferred over the network here — the runner CLI
+already runs on the exact machine Claude's `remote_*` tools read from, so
+a valid path is already exactly where it needs to be. (Compare this to the
+web UI's drag-and-drop, which genuinely uploads bytes because the browser
+and the target filesystem are different machines — see
+[Web UI](/guide/web-ui).)
 
 ## What's actually happening
 

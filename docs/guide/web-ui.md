@@ -37,6 +37,24 @@ same time and both update identically.
 - A footer line after each turn shows cost, duration, and turn count from
   Claude Code's own `result` event.
 
+## Attaching files
+
+Drag a file onto the composer, paste one from your clipboard (a
+screenshot, say), or click the paperclip icon — any of the three works,
+and you can attach several at once.
+
+Each attachment shows as `[Uploading <name>…]` right where your cursor
+was, then gets swapped for a real file path once the upload finishes (or
+for an error message if it didn't). The file itself is uploaded to
+whichever filesystem the session actually targets — this server's
+`WORKSPACE_ROOT` for a local session, or the connected runner's root for a
+runner-targeted one — landing in a dedicated `.claude-remote-uploads/<session
+id>/` folder so it never lands inside your actual project tree. Claude
+picks it up the normal way: by reading the path mentioned in your prompt.
+
+Uploads are capped at 25MB per file. A runner-targeted upload needs that
+runner connected — same as sending a message does.
+
 ## Stopping a turn
 
 The **Stop** button in the session header sends `SIGINT` to the

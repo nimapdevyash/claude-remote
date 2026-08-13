@@ -77,6 +77,23 @@ generated fresh each server boot and never sent to the browser or a
 runner. Requests from any other address are rejected outright, regardless
 of token.
 
+## File uploads
+
+`POST /api/sessions/:id/uploads` sits behind the same `requireAuth` as
+every other session route — no separate credential. A few narrower checks
+are specific to it:
+
+- Capped at 25MB per file (`multer`'s `limits.fileSize`).
+- The original filename is never trusted as a path — only
+  `path.basename()` of it, further restricted to a
+  `[a-zA-Z0-9._-]` whitelist, so a filename like `../../etc/passwd` just
+  becomes `passwd`.
+- Where the file actually lands still goes through the exact same
+  boundary check as everything else: `resolveWorkspacePath` for a local
+  session, `resolveSafe` (via the runner's `write_file` action) for a
+  runner-targeted one. Uploads don't introduce a second way to escape a
+  session's root — they reuse the one that's already enforced everywhere.
+
 ## Exposing it over the internet
 
 If you tunnel the server out (ngrok, Cloudflare Tunnel, Tailscale — see

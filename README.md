@@ -52,8 +52,7 @@ npm run serve:public
 
 This builds the client, starts the server, opens the tunnel, and prints
 the public URL — plus the exact `claude-remote --server wss://...` command
-to point a runner CLI at it for that run, without overwriting its saved
-default. See [Exposing it remotely](https://nimapdevyash.github.io/claude-remote/guide/remote-access)
+to point a runner CLI at it for that run. See [Exposing it remotely](https://nimapdevyash.github.io/claude-remote/guide/remote-access)
 and [Auth & security](https://nimapdevyash.github.io/claude-remote/guide/security)
 before you do.
 
