@@ -9,6 +9,7 @@ const bold = (t) => style(1, t)
 const green = (t) => style(32, t)
 const red = (t) => style(31, t)
 const accent = (t) => style(35, t)
+const cyan = (t) => style(36, t)
 
 const TOOL_SUMMARY = {
   Bash: (i) => i.command,
@@ -72,7 +73,7 @@ export function printKeyValue(pairs) {
   }
 }
 
-export const PROMPT_SYMBOL = `${accent('❯')} `
+export const PROMPT_SYMBOL = `${bold(accent('❯'))} `
 
 // Each entry: { usage, description, example? } — used by --help to show
 // what a command does and a concrete, copy-pasteable example, not just a
@@ -138,10 +139,12 @@ export function createSpinner() {
 
 // Creates a stateful printer for one turn's stream of raw claude-code
 // events, rendering them incrementally in the same visual style as the
-// real `claude` CLI (● Tool: summary lines, ◆-marked assistant text so it
-// reads as distinctly "Claude talking" next to your own ❯-prefixed prompt
-// and any ✗ tool failures). `spinner` (optional) is paused for the instant
-// a line is printed and resumed right after, so it never overlaps output.
+// real `claude` CLI (● Tool: summary lines, ◆-marked assistant text). The
+// assistant marker is deliberately a different color (cyan) than the
+// magenta ❯ you type your own prompt with, and any ✗ tool failures, so a
+// glance at the left margin is enough to tell who's "talking" on any given
+// line. `spinner` (optional) is paused for the instant a line is printed
+// and resumed right after, so it never overlaps output.
 export function createTurnPrinter(spinner) {
   const pendingByToolId = new Map()
 
@@ -151,7 +154,7 @@ export function createTurnPrinter(spinner) {
     if (event.type === 'assistant' && Array.isArray(event.message?.content)) {
       for (const part of event.message.content) {
         if (part.type === 'text' && part.text) {
-          console.log(`\n${accent('◆')} ${part.text}`)
+          console.log(`\n${bold(cyan('◆'))} ${part.text}`)
         } else if (part.type === 'tool_use') {
           pendingByToolId.set(part.id, part)
           console.log(`${accent('●')} ${bold(toolLabel(part.name))}: ${dim(toolSummary(part.name, part.input))}`)
@@ -201,4 +204,4 @@ export function printSuccess(message) {
   console.log(green(message))
 }
 
-export { green, red, dim, bold, accent }
+export { green, red, dim, bold, accent, cyan }

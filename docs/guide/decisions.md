@@ -83,16 +83,40 @@ becomes `passwd` rather than doing anything with the directory
 separators. Directory upload wasn't in scope — the request is only ever
 worth building once someone actually asks for it.
 
-## Server URL is never cached in the runner CLI (2026-08-13)
+## The runner CLI's server URL is cached, but confirmed every run (2026-08-13)
 
-**Shipped:** `--server` flag / `SERVER_URL` env var / interactive prompt
-(looped until non-empty) are the only sources for the server URL on every
-run — the value is never read from or written to
-`~/.claude-remote/config.json`. Folder and display name are unaffected.
+**Shipped:** `--server` flag / `SERVER_URL` env var take priority as
+always, one-off and never saved. Absent either, a saved server URL is
+shown and a single yes/no prompt — "Connect to a different one this run?"
+— decides whether to reuse it (default) or type a new one, which then
+becomes the new saved default. First run with nothing saved just asks
+directly, looped until non-empty. Folder and display name are unaffected —
+asked once, persisted, never re-asked.
 
-**Why:** the server URL is typically an ngrok-style tunnel that changes on
-every restart. Caching it meant the saved default went stale immediately
-and silently pointed at a dead tunnel unless `--server` was remembered
-every time. Folder and display name describe the machine itself and
-genuinely don't change run to run, so those keep the old persisted
-behavior.
+**Why:** this superseded an earlier version of this feature that never
+cached the server URL at all, on the theory that it's usually an
+ngrok-style tunnel URL that changes every restart, so a cached default
+would just go stale. In practice that made a *stable* URL (a local
+network address, a fixed reverse proxy) annoying to retype on every single
+run. A one-question confirmation gets both cases right: a stale tunnel is
+one keystroke to override, and a stable address needs nothing entered at
+all after the first run.
+
+**Files touched:** `runner/src/config.js`, `runner/src/index.js`,
+`runner/.env.example`.
+
+## Assistant text gets its own color, distinct from the prompt (2026-08-13)
+
+**Shipped:** the runner CLI's `◆` assistant-text marker is now cyan and
+bold; the `❯` you type your own prompt with stayed magenta but is now also
+bold. Previously both used the same accent color, so a fast glance down
+the terminal couldn't tell "your line" from "Claude's line" without
+reading the glyph itself.
+
+**Why:** the two markers are the only fixed visual anchor at the start of
+every line in the transcript — everything after them is plain text. Making
+them different hues (rather than, say, only different glyphs) means the
+distinction survives even a quick glance or a slightly-too-small font,
+where a ❯ and a ◆ can look similar at a distance.
+
+**Files touched:** `runner/src/renderer.js`.

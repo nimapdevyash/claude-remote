@@ -30,10 +30,12 @@ with your account.
 
 ## Pointing the runner CLI at a tunnel
 
-The server URL is never saved between runs in the first place — ngrok's
-free tier gives you a new random URL every time you restart it, so caching
-one would just mean silently pointing at a dead tunnel. Every run either
-prompts for it fresh or takes an override:
+The runner CLI does remember the last server URL you used — but ngrok's
+free tier hands you a brand-new random one every time you restart it, so
+that saved default goes stale the moment the tunnel restarts. Every run
+without an override asks a quick "connect to a different one this run?"
+instead of silently reusing a possibly-dead tunnel, but for a one-off
+tunnel it's faster to just skip straight past that question:
 
 ```bash
 claude-remote --server wss://abc123.ngrok-free.app/ws
@@ -41,9 +43,10 @@ claude-remote --server wss://abc123.ngrok-free.app/ws
 claude-remote -s wss://abc123.ngrok-free.app/ws
 ```
 
-`--server`/`-s` takes priority over the `SERVER_URL` env var, which takes
-priority over the interactive prompt. None of the three is ever written to
-`~/.claude-remote/config.json` — only the folder and display name are.
+This takes priority over both the saved config and the `SERVER_URL` env
+var, and — unlike answering "yes" to the prompt — is never written to
+`~/.claude-remote/config.json`, so your saved default (e.g. a stable local
+address) is untouched for next time.
 
 ## Notes
 

@@ -37,18 +37,24 @@ chat history live separately (directly under `~/.claude-remote/`, not
 claude-remote
 ```
 
-The first run asks three questions:
+The first run asks three questions, and remembers your answers in
+`~/.claude-remote/config.json`:
 
 1. **Server WebSocket URL** — `ws://<host>:4317/ws`, or `wss://...` through
-   a tunnel. This one is asked **every** run, never saved — it's typically
-   an ngrok-style tunnel URL that changes on restart, so caching it would
-   just mean silently pointing at a dead tunnel. Pass `--server`/`-s` or
-   set `SERVER_URL` to skip the prompt for a given run.
+   a tunnel
 2. **Folder** this machine's runner is confined to — every command and
    file path Claude Code sends it is resolved relative to this and can't
-   escape it. Asked once, remembered in `~/.claude-remote/config.json`.
-3. **Display name** — how it shows up in the web UI's "Run on" picker.
-   Also asked once and remembered.
+   escape it
+3. **Display name** — how it shows up in the web UI's "Run on" picker
+
+Every run *after* that just shows the saved server and asks a quick
+yes/no — "Connect to a different one this run?" — instead of silently
+reusing it or making you retype it. Answer no (or just press Enter) and it
+connects to the saved one; answer yes and whatever you type becomes the
+new saved default. Folder and display name don't get re-asked at all once
+they're saved. Pass `--server`/`-s` or set `SERVER_URL` to skip the
+question outright for one run without touching what's saved — the one you
+actually want for an ngrok tunnel that gets a new URL every restart.
 
 Then it signs you in (username/password — cached afterward at
 `~/.claude-remote/session`), connects, and drops you into a prompt:
@@ -79,8 +85,8 @@ closes it.
 
 ```
 claude-remote                    Connect and open the chat prompt
-claude-remote setup               Re-run first-time setup (root, name — server URL is always asked fresh)
-claude-remote --server <url>      Skip the server URL prompt for this run
+claude-remote setup               Clear saved setup so the next run asks for all three again
+claude-remote --server <url>      Use this server URL for just this run — never overwrites the saved one
 claude-remote -s <url>            Shorthand for --server
 claude-remote --help              Show this
 
@@ -96,9 +102,10 @@ See [Auth & security](/guide/security) for how accounts and roles work.
 
 `--server`/`-s` is the one to reach for when you're tunneling with ngrok
 and get a fresh random URL each time — see
-[Exposing it remotely](/guide/remote-access). Since the server URL is
-never saved in the first place, this just skips the interactive prompt for
-that one run; nothing needs "restoring" afterward.
+[Exposing it remotely](/guide/remote-access). It takes priority over both
+the saved config and the `SERVER_URL` env var, and is never written to
+`~/.claude-remote/config.json`, so your saved default (e.g. a stable local
+address) is untouched for next time.
 
 ## Attaching files
 

@@ -42,7 +42,7 @@ function printHelp() {
     },
     {
       usage: 'claude-remote setup',
-      description: 'Re-run first-time setup (working folder, display name). The server URL is always asked fresh — see --server below.',
+      description: 'Clear saved setup (server URL, working folder, display name) so the next run asks for all three again.',
       example: 'claude-remote setup',
     },
     {
@@ -66,7 +66,7 @@ function printHelp() {
   printCommandHelp([
     {
       usage: '--server <url>, -s <url>',
-      description: "Skip the server URL prompt for this run. The URL is never saved — it's always asked fresh next time unless you pass this again.",
+      description: 'Use this server URL for just this run — never overwrites the saved one.',
       example: 'claude-remote --server wss://abc123.ngrok-free.app/ws',
     },
     {
