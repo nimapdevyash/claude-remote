@@ -1,6 +1,6 @@
 # Quickstart
 
-claude-remote has three pieces, each its own workspace:
+Highwayman has three pieces, each its own workspace:
 
 ```
 claude-remote/
@@ -47,6 +47,14 @@ npm run build   # builds client/dist
 npm start       # serves the built client + API from one process on PORT
 ```
 
+Or run it as a background service instead of tying up a terminal — see
+the [Server CLI guide](/guide/server-cli):
+
+```bash
+cd server && npm link
+highwayman-server start
+```
+
 ## 3. Create a session
 
 In the web UI, click **New session**, choose **Run on → This server**, and
@@ -57,7 +65,7 @@ rendered in a chat feed instead of a terminal.
 ## 4. Put a runner on another machine (optional)
 
 If you want Claude Code's actual file edits and shell commands to happen
-on a *different* machine, install the runner CLI there:
+on a *different* machine, install the runner CLI (`highwayman`) there:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/nimapdevyash/claude-remote/main/install.sh | bash

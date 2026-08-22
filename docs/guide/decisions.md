@@ -16,7 +16,7 @@ support added to the runner's existing `write_file` action.
 (new), `runner/src/repl.js`, `client/src/lib/api.ts`,
 `client/src/components/Composer.tsx`, `client/src/components/ChatView.tsx`.
 
-### Uploads land in `.claude-remote-uploads/<sessionId>/`, not the session's own cwd
+### Uploads land in `.highwayman-uploads/<sessionId>/`, not the session's own cwd
 
 **Why:** dropping a screenshot into a chat about an unrelated project
 would otherwise leave an untracked binary file sitting in that project's
@@ -120,3 +120,59 @@ distinction survives even a quick glance or a slightly-too-small font,
 where a ❯ and a ◆ can look similar at a distance.
 
 **Files touched:** `runner/src/renderer.js`.
+
+## Renamed to Highwayman; the server runs as a background service; battery status in the CLI (2026-08-22)
+
+**Shipped:** the project renamed `claude-remote` → **Highwayman**. The
+runner CLI's binary is now `highwayman` (was `claude-remote`); its state
+directory moved from `~/.claude-remote` to `~/.highwayman`; uploads now
+land in `.highwayman-uploads/`; the `CLAUDE_REMOTE_*` env vars became
+`HIGHWAYMAN_*`. The server gained a `highwayman-server` CLI
+(`start`/`stop`/`restart`/`status`/`logs`) so it can run as a background
+daemon instead of tying up a foreground terminal. The runner CLI now also
+shows the server machine's battery percentage and charging status, in the
+connection banner and after every turn.
+
+**Files touched:** `package.json`, `server/package.json`,
+`server/src/cli.js` (new), `server/src/battery.js` (new),
+`server/src/index.js`, `server/src/mcpBridge.js`,
+`server/src/routes/sessions.js`, `runner/package.json`,
+`runner/src/index.js`, `runner/src/config.js`, `runner/src/chatSession.js`,
+`runner/src/authClient.js`, `runner/src/admin.js`, `runner/src/renderer.js`,
+`runner/src/repl.js`, `runner/src/status.js` (new), `runner/.env.example`,
+`client/src/lib/api.ts`, `client/src/lib/auth.tsx`,
+`client/src/components/LoginScreen.tsx`,
+`client/src/components/Sidebar.tsx`, `scripts/dev.js`,
+`scripts/serve-public.js`, `install.sh`, `install.ps1`.
+
+### The daemon is a plain detached Node process with a PID file, not a real service manager unit
+
+**Why:** `start`/`stop`/`status` were the actual ask — not systemd/launchd
+integration, which would mean per-OS unit files and installation steps for
+what's still a one-person dev tool. `highwayman-server` resolves its own
+real path via `import.meta.url` (so it works the same whether invoked
+through `npm link` or directly from the repo, regardless of the caller's
+cwd), spawns `node src/index.js` detached with stdout/stderr redirected to
+`~/.highwayman/server.log`, and tracks it by PID in
+`~/.highwayman/server.pid`. `stop` just sends `SIGTERM` to that PID. If a
+real service manager is ever needed, this CLI is what a unit file would
+shell out to anyway.
+
+### Battery status is read directly (`/sys/class/power_supply`, `pmset`, PowerShell), not a new dependency
+
+**Why:** the only thing needed is one percentage and a boolean, on
+whichever OS the server happens to run on. A library like
+`systeminformation` would pull in far more than that for three
+platform-specific reads this project can just do itself in
+`server/src/battery.js` — none of which need elevated permissions or
+polling infrastructure, since the runner CLI already re-fetches
+`GET /api/status` once per turn.
+
+### The GitHub repo, docs deploy path, and install-script URLs stay `claude-remote`
+
+**Why:** the actual git remote (`github.com/nimapdevyash/claude-remote`)
+and the GitHub Pages deploy path (`docs/.vitepress/config.mts`'s `base:
+'/claude-remote/'`) are external resources this change didn't touch —
+renaming those is a separate, deliberate step (a GitHub repo rename plus a
+matching `base` update) rather than a side effect of a text rename across
+the codebase.

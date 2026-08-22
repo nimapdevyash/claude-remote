@@ -1,9 +1,9 @@
 # Runner CLI
 
-The runner CLI is what makes claude-remote feel like Claude Code is
-running on whichever machine you're sitting at — even though the actual
-model calls happen on the server's machine (the one with your Claude Code
-login).
+The runner CLI (`highwayman`) is what makes Highwayman feel like Claude
+Code is running on whichever machine you're sitting at — even though the
+actual model calls happen on the server's machine (the one with your
+Claude Code login).
 
 ## Install
 
@@ -20,25 +20,25 @@ iwr https://raw.githubusercontent.com/nimapdevyash/claude-remote/main/install.ps
 ```
 
 Both scripts detect your OS, check for Node.js 18+, fetch the CLI, and put
-a `claude-remote` command on your `PATH`. Nothing is installed outside
-`~/.claude-remote` (and, if needed, `~/.local/bin`, or your User `PATH` on
+a `highwayman` command on your `PATH`. Nothing is installed outside
+`~/.highwayman` (and, if needed, `~/.local/bin`, or your User `PATH` on
 Windows) — see the scripts themselves at the repo root.
 
 Re-running either one-liner always does a **clean reinstall**: it removes
-whatever's at `~/.claude-remote/app` first, then fetches a fresh copy.
+whatever's at `~/.highwayman/app` first, then fetches a fresh copy.
 That's the answer to "how do I update" or "how do I get a clean slate" —
 just run the same command again. Your saved config, login session, and
-chat history live separately (directly under `~/.claude-remote/`, not
+chat history live separately (directly under `~/.highwayman/`, not
 `app/`) and survive a reinstall.
 
 ## First run
 
 ```bash
-claude-remote
+highwayman
 ```
 
 The first run asks three questions, and remembers your answers in
-`~/.claude-remote/config.json`:
+`~/.highwayman/config.json`:
 
 1. **Server WebSocket URL** — `ws://<host>:4317/ws`, or `wss://...` through
    a tunnel
@@ -57,14 +57,15 @@ question outright for one run without touching what's saved — the one you
 actually want for an ngrok tunnel that gets a new URL every restart.
 
 Then it signs you in (username/password — cached afterward at
-`~/.claude-remote/session`), connects, and drops you into a prompt:
+`~/.highwayman/session`), connects, and drops you into a prompt:
 
 ```
-◆ claude-remote
-  connected as  "yashs-laptop"
-  server        ws://localhost:4317/ws
-  root          /home/yash/projects
-  session       A6WMYb1Hzx
+◆ highwayman
+  connected as    "yashs-laptop"
+  server          ws://localhost:4317/ws
+  root            /home/yash/projects
+  session         A6WMYb1Hzx
+  server battery  🔋 82% (on battery)
 
 ────────────────────────────────────────────────
 Type a task and press Enter.  Ctrl+C or "exit" to quit.
@@ -75,8 +76,14 @@ Done — converted 4 callback chains to async/await.
 
 $0.06 · 12.3s · 2 turns
 
+server battery: 🔋 81% (on battery)
 ❯
 ```
+
+The `server battery` row only appears if the server machine actually has
+one (a laptop, say) — desktops just don't show it. It's re-fetched after
+every turn, not just once at connect, so it stays current through a long
+session.
 
 Type a task, press Enter, watch it stream. `exit` or `quit` (or Ctrl+C)
 closes it.
@@ -84,15 +91,15 @@ closes it.
 ## Commands and flags
 
 ```
-claude-remote                    Connect and open the chat prompt
-claude-remote setup               Clear saved setup so the next run asks for all three again
-claude-remote --server <url>      Use this server URL for just this run — never overwrites the saved one
-claude-remote -s <url>            Shorthand for --server
-claude-remote --help              Show this
+highwayman                    Connect and open the chat prompt
+highwayman setup               Clear saved setup so the next run asks for all three again
+highwayman --server <url>      Use this server URL for just this run — never overwrites the saved one
+highwayman -s <url>            Shorthand for --server
+highwayman --help              Show this
 
-claude-remote admin list                     List accounts (admin only)
-claude-remote admin add <username> [--admin] Create an account (admin only)
-claude-remote admin remove <username>        Remove an account (admin only)
+highwayman admin list                     List accounts (admin only)
+highwayman admin add <username> [--admin] Create an account (admin only)
+highwayman admin remove <username>        Remove an account (admin only)
 ```
 
 The `admin` commands are thin clients over `/api/admin/*` — the server
@@ -104,7 +111,7 @@ See [Auth & security](/guide/security) for how accounts and roles work.
 and get a fresh random URL each time — see
 [Exposing it remotely](/guide/remote-access). It takes priority over both
 the saved config and the `SERVER_URL` env var, and is never written to
-`~/.claude-remote/config.json`, so your saved default (e.g. a stable local
+`~/.highwayman/config.json`, so your saved default (e.g. a stable local
 address) is untouched for next time.
 
 ## Attaching files

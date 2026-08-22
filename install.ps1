@@ -1,19 +1,19 @@
-# claude-remote runner installer (Windows PowerShell)
+# highwayman runner installer (Windows PowerShell)
 #
 #   iwr https://raw.githubusercontent.com/nimapdevyash/claude-remote/main/install.ps1 -useb | iex
 #
-# Checks for Node.js, fetches the runner CLI, and puts a claude-remote
-# command on your PATH. Only touches %USERPROFILE%\.claude-remote and
+# Checks for Node.js, fetches the runner CLI, and puts a highwayman
+# command on your PATH. Only touches %USERPROFILE%\.highwayman and
 # %USERPROFILE%\.local\bin (plus your User PATH, with a message telling you so).
 
 $ErrorActionPreference = "Stop"
 
 $RepoUrl = "https://github.com/nimapdevyash/claude-remote.git"
 $ArchiveUrl = "https://github.com/nimapdevyash/claude-remote/archive/refs/heads/main.zip"
-$InstallDir = Join-Path $env:USERPROFILE ".claude-remote"
+$InstallDir = Join-Path $env:USERPROFILE ".highwayman"
 $AppDir = Join-Path $InstallDir "app"
 $BinDir = Join-Path $env:USERPROFILE ".local\bin"
-$WrapperPath = Join-Path $BinDir "claude-remote.cmd"
+$WrapperPath = Join-Path $BinDir "highwayman.cmd"
 
 function Info($msg) { Write-Host "==> $msg" -ForegroundColor Cyan }
 function Warn($msg) { Write-Host "!! $msg" -ForegroundColor Yellow }
@@ -42,7 +42,7 @@ function Get-App {
 
   $git = Get-Command git -ErrorAction SilentlyContinue
   if ($git) {
-    Info "Cloning claude-remote into $AppDir"
+    Info "Cloning highwayman into $AppDir"
     git clone --depth=1 $RepoUrl $AppDir
   } else {
     Info "git not found - downloading a source archive instead"
@@ -94,9 +94,9 @@ Write-Host ""
 Info "Installed: $WrapperPath"
 Write-Host ""
 if ($alreadyOnPath) {
-  Info "Run it with: claude-remote"
+  Info "Run it with: highwayman"
 } else {
-  Info "Open a new terminal, then run: claude-remote"
+  Info "Open a new terminal, then run: highwayman"
 }
 Write-Host ""
 Info "First run will walk you through server URL, folder, name, and sign-in."

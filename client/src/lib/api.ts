@@ -1,6 +1,6 @@
 import type { AccountInfo, BrowseResult, RunnerInfo, SessionDetail, SessionSummary } from '../types/api'
 
-const TOKEN_KEY = 'claude-remote:token'
+const TOKEN_KEY = 'highwayman:token'
 
 export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY)
@@ -31,7 +31,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     },
   })
   if (res.status === 401) {
-    window.dispatchEvent(new Event('claude-remote:unauthorized'))
+    window.dispatchEvent(new Event('highwayman:unauthorized'))
   }
   if (!res.ok) {
     let message = res.statusText

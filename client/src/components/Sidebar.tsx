@@ -24,7 +24,7 @@ export function Sidebar({ sessions, activeId, onSelect, onNewSession }: Props) {
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-500/15 text-accent-400">
           <Terminal size={16} />
         </div>
-        <span className="text-sm font-semibold text-base-50">claude-remote</span>
+        <span className="text-sm font-semibold text-base-50">Highwayman</span>
         <span className="ml-auto" title={connected ? 'Connected' : 'Reconnecting…'}>
           {connected ? (
             <Wifi size={14} className="text-good-500" />

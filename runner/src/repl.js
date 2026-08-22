@@ -1,7 +1,8 @@
 import WebSocket from 'ws'
 import { prompt } from './prompt.js'
-import { createTurnPrinter, createSpinner, printBanner, printError, printSuccess, dim, PROMPT_SYMBOL } from './renderer.js'
+import { createTurnPrinter, createSpinner, printBanner, printError, printSuccess, formatBattery, dim, PROMPT_SYMBOL } from './renderer.js'
 import { resolveAttachment, formatAttachmentBlock } from './attachments.js'
+import { fetchServerBattery } from './status.js'
 
 async function authedFetch(httpBaseUrl, token, urlPath, options = {}) {
   return fetch(`${httpBaseUrl}${urlPath}`, {
@@ -137,7 +138,8 @@ export async function startRepl({ serverUrl, httpBaseUrl, token, sessionId, name
 
   await connect()
 
-  printBanner({ name, root, sessionId, serverUrl, overrideSource })
+  const battery = await fetchServerBattery(httpBaseUrl, token)
+  printBanner({ name, root, sessionId, serverUrl, overrideSource, battery })
   console.log(dim('Type "@fileupload <path> [path...]" (or bare, for a multi-file prompt) to attach files from this machine.\n'))
 
   for (;;) {
@@ -172,6 +174,9 @@ export async function startRepl({ serverUrl, httpBaseUrl, token, sessionId, name
     await new Promise((resolve) => {
       resolveTurn = resolve
     })
+
+    const batteryLine = formatBattery(await fetchServerBattery(httpBaseUrl, token))
+    if (batteryLine) console.log(dim('server battery: ') + batteryLine)
   }
 
   intentionalClose = true

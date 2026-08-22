@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
-# claude-remote runner installer (macOS/Linux)
+# highwayman runner installer (macOS/Linux)
 #
 #   curl -fsSL https://raw.githubusercontent.com/nimapdevyash/claude-remote/main/install.sh | bash
 #
 # Detects your OS/shell, checks for Node.js, fetches the runner CLI, and
-# puts a `claude-remote` command on your PATH. It does not touch
-# anything outside ~/.claude-remote and (if needed) ~/.local/bin.
+# puts a `highwayman` command on your PATH. It does not touch
+# anything outside ~/.highwayman and (if needed) ~/.local/bin.
 set -euo pipefail
 
-REPO_URL="${CLAUDE_REMOTE_REPO_URL:-https://github.com/nimapdevyash/claude-remote.git}"
-ARCHIVE_URL="${CLAUDE_REMOTE_ARCHIVE_URL:-https://github.com/nimapdevyash/claude-remote/archive/refs/heads/main.tar.gz}"
-INSTALL_DIR="${CLAUDE_REMOTE_INSTALL_DIR:-$HOME/.claude-remote}"
+REPO_URL="${HIGHWAYMAN_REPO_URL:-https://github.com/nimapdevyash/claude-remote.git}"
+ARCHIVE_URL="${HIGHWAYMAN_ARCHIVE_URL:-https://github.com/nimapdevyash/claude-remote/archive/refs/heads/main.tar.gz}"
+INSTALL_DIR="${HIGHWAYMAN_INSTALL_DIR:-$HOME/.highwayman}"
 APP_DIR="$INSTALL_DIR/app"
-BIN_NAME="claude-remote"
+BIN_NAME="highwayman"
 
 info()  { printf '\033[36m==>\033[0m %s\n' "$1"; }
 warn()  { printf '\033[33m!!\033[0m %s\n' "$1"; }
@@ -50,7 +50,7 @@ fetch_app() {
   fi
 
   if command -v git >/dev/null 2>&1; then
-    info "Cloning claude-remote into $APP_DIR"
+    info "Cloning highwayman into $APP_DIR"
     git clone --depth=1 "$REPO_URL" "$APP_DIR"
   else
     info "git not found — downloading a source archive instead"

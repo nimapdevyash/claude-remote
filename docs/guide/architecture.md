@@ -44,7 +44,7 @@ Web browser / runner CLI (chat mode)
         │  REST: create session, send message
         │  WS:   subscribe → live turn/tool-call/result events
         ▼
-   claude-remote server  ──spawns──▶  `claude` (this machine's login)
+   Highwayman server  ──spawns──▶  `claude` (this machine's login)
         │  ▲                                │ MCP tool_use
         │  │ internal HTTP (loopback-only)   ▼
         │  └──────────────────────  mcpBridge.js (stdio MCP server)
@@ -64,7 +64,7 @@ identical session without either one being a special case.
 `POST /api/sessions/:id/uploads` (multipart, one file per request) is the
 one piece of the API that doesn't go through the `claude` process at all
 — it just needs the bytes to land on whichever filesystem the session
-targets, in `.claude-remote-uploads/<sessionId>/`, before the next turn
+targets, in `.highwayman-uploads/<sessionId>/`, before the next turn
 starts:
 
 - **Local session** — written directly with `fs.writeFileSync`, through
@@ -84,6 +84,16 @@ next prompt so Claude's Read tool (or `remote_read_file`) picks it up
 exactly like any other file reference. See [Web UI](/guide/web-ui) and
 [Runner CLI](/guide/runner-cli) for the two ways a path actually gets
 there.
+
+## Server status
+
+`GET /api/status` reports the server machine's own battery (via
+`server/src/battery.js` — reads `/sys/class/power_supply` on Linux,
+shells out to `pmset`/PowerShell on macOS/Windows, and returns
+`hasBattery: false` on a desktop with none). The runner CLI polls it to
+show a `🔋 82% (charging)`-style line, since the server machine — the one
+holding your Claude Code login — is often a laptop you'd want a warning
+about running low mid-task.
 
 ## Why not just SSH?
 

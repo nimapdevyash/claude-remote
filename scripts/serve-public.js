@@ -105,7 +105,7 @@ async function main() {
   const lines = [
     '',
     '='.repeat(64),
-    `  claude-remote is live at: ${publicUrl}`,
+    `  Highwayman is live at: ${publicUrl}`,
     `  (local: http://localhost:${PORT})`,
     '',
   ]
@@ -122,7 +122,7 @@ async function main() {
     '    curl -fsSL https://raw.githubusercontent.com/nimapdevyash/claude-remote/main/install.sh | bash',
     '',
     '  Then connect it to this tunnel for just this run:',
-    `    claude-remote --server ${wsUrl}/ws`,
+    `    highwayman --server ${wsUrl}/ws`,
     '='.repeat(64),
     '',
   )

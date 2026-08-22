@@ -8,7 +8,7 @@ import { printHeader, dim } from './renderer.js'
 
 dotenv.config()
 
-const STATE_DIR = path.join(os.homedir(), '.claude-remote')
+const STATE_DIR = path.join(os.homedir(), '.highwayman')
 const ID_PATH = path.join(STATE_DIR, 'id')
 const SETUP_PATH = path.join(STATE_DIR, 'config.json')
 
@@ -57,7 +57,7 @@ function toHttpBaseUrl(serverUrl) {
 //
 // Folder and display name are simpler: they describe this machine itself
 // and don't change run to run, so those just get asked once and persisted
-// to ~/.claude-remote/config.json, no confirmation dance needed.
+// to ~/.highwayman/config.json, no confirmation dance needed.
 //
 // `minimal: true` (used by `admin` subcommands) skips the root/name
 // prompts entirely — those describe this machine's executor, which admin
@@ -101,7 +101,7 @@ export async function loadConfig({ serverOverride, minimal = false } = {}) {
   if (!minimal) {
     if (!root || !name) {
       printHeader('First-time setup')
-      console.log('Folder and display name only need to be set once — saved to ~/.claude-remote/config.json\n')
+      console.log('Folder and display name only need to be set once — saved to ~/.highwayman/config.json\n')
     }
 
     if (!root) {
@@ -123,7 +123,7 @@ export async function loadConfig({ serverOverride, minimal = false } = {}) {
     if (serverUrlChanged) setupToSave.serverUrl = serverUrl
     else if (saved.serverUrl) setupToSave.serverUrl = saved.serverUrl
     saveSetup(setupToSave)
-    console.log('Saved. Run `claude-remote setup` any time to change these.\n')
+    console.log('Saved. Run `highwayman setup` any time to change these.\n')
   }
 
   return {

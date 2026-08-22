@@ -17,11 +17,11 @@ It prints something like:
 
 ```
 ================================================================
-  claude-remote is live at: https://abc123.ngrok-free.app
+  Highwayman is live at: https://abc123.ngrok-free.app
   (local: http://localhost:4317)
 
   Point the runner CLI at this tunnel for just this run:
-    claude-remote --server wss://abc123.ngrok-free.app/ws
+    highwayman --server wss://abc123.ngrok-free.app/ws
 ================================================================
 ```
 
@@ -38,14 +38,14 @@ instead of silently reusing a possibly-dead tunnel, but for a one-off
 tunnel it's faster to just skip straight past that question:
 
 ```bash
-claude-remote --server wss://abc123.ngrok-free.app/ws
+highwayman --server wss://abc123.ngrok-free.app/ws
 # or the short form:
-claude-remote -s wss://abc123.ngrok-free.app/ws
+highwayman -s wss://abc123.ngrok-free.app/ws
 ```
 
 This takes priority over both the saved config and the `SERVER_URL` env
 var, and — unlike answering "yes" to the prompt — is never written to
-`~/.claude-remote/config.json`, so your saved default (e.g. a stable local
+`~/.highwayman/config.json`, so your saved default (e.g. a stable local
 address) is untouched for next time.
 
 ## Notes

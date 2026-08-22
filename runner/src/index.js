@@ -5,7 +5,8 @@ import { ensureChatSession } from './chatSession.js'
 import { startExecutor } from './executor.js'
 import { startRepl } from './repl.js'
 import { runAdminCommand } from './admin.js'
-import { dim, bold, printBox, printCommandHelp } from './renderer.js'
+import { dim, bold, printBox, printCommandHelp, formatBattery } from './renderer.js'
+import { fetchServerBattery } from './status.js'
 
 function parseArgs(argv) {
   let serverOverride = null
@@ -30,7 +31,7 @@ function parseArgs(argv) {
 
 function printHelp() {
   console.log()
-  printBox('claude-remote', [
+  printBox('highwayman', [
     "Run Claude Code from anywhere — reasoning happens on the server's",
     'login; execution happens wherever this CLI is running.',
   ])
@@ -39,29 +40,29 @@ function printHelp() {
   console.log(bold('Commands'))
   printCommandHelp([
     {
-      usage: 'claude-remote',
+      usage: 'highwayman',
       description: 'Connect and open the interactive chat prompt.',
-      example: 'claude-remote',
+      example: 'highwayman',
     },
     {
-      usage: 'claude-remote setup',
+      usage: 'highwayman setup',
       description: 'Clear saved setup (server URL, working folder, display name) so the next run asks for all three again.',
-      example: 'claude-remote setup',
+      example: 'highwayman setup',
     },
     {
-      usage: 'claude-remote admin list',
+      usage: 'highwayman admin list',
       description: 'List every account on the server. Admin accounts only.',
-      example: 'claude-remote admin list',
+      example: 'highwayman admin list',
     },
     {
-      usage: 'claude-remote admin add <username> [--admin]',
+      usage: 'highwayman admin add <username> [--admin]',
       description: 'Create a new account, optionally as an admin. Admin accounts only.',
-      example: 'claude-remote admin add rupali --admin',
+      example: 'highwayman admin add rupali --admin',
     },
     {
-      usage: 'claude-remote admin remove <username>',
+      usage: 'highwayman admin remove <username>',
       description: "Remove an account. Admin accounts only; you can't remove your own.",
-      example: 'claude-remote admin remove rupali',
+      example: 'highwayman admin remove rupali',
     },
   ])
 
@@ -70,7 +71,7 @@ function printHelp() {
     {
       usage: '--server <url>, -s <url>',
       description: 'Use this server URL for just this run — never overwrites the saved one.',
-      example: 'claude-remote --server wss://abc123.ngrok-free.app/ws',
+      example: 'highwayman --server wss://abc123.ngrok-free.app/ws',
     },
     {
       usage: '--help, -h',
@@ -91,7 +92,7 @@ async function main() {
 
   if (command === 'setup') {
     resetSetup()
-    console.log('Setup cleared — run `claude-remote` again to reconfigure.')
+    console.log('Setup cleared — run `highwayman` again to reconfigure.')
     process.exit(0)
   }
 
@@ -126,7 +127,9 @@ async function main() {
       overrideSource: config.overrideSource,
     })
   } else {
-    console.log(`claude-remote connected as "${config.name}" — root: ${config.root}`)
+    console.log(`highwayman connected as "${config.name}" — root: ${config.root}`)
+    const batteryLine = formatBattery(await fetchServerBattery(config.httpBaseUrl, token))
+    if (batteryLine) console.log(dim('server battery: ') + batteryLine)
     console.log(dim('Running in the background (no TTY). Ctrl+C to stop.'))
   }
 }

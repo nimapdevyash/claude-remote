@@ -2,7 +2,7 @@
 layout: home
 
 hero:
-  name: claude-remote
+  name: Highwayman
   text: Run Claude Code from anywhere
   tagline: A web UI and a CLI, both backed by the machine that holds your Claude Code login — reach it from your phone, or hand its hands to a different laptop entirely.
   actions:

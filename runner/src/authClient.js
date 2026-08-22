@@ -4,7 +4,7 @@ import path from 'path'
 import { prompt, promptHidden } from './prompt.js'
 import { printHeader, printSuccess, dim } from './renderer.js'
 
-const TOKEN_PATH = path.join(os.homedir(), '.claude-remote', 'session')
+const TOKEN_PATH = path.join(os.homedir(), '.highwayman', 'session')
 
 function loadCachedToken() {
   try {

@@ -1,4 +1,4 @@
-# claude-remote
+# Highwayman
 
 Run Claude Code from anywhere, two ways:
 
@@ -6,12 +6,13 @@ Run Claude Code from anywhere, two ways:
    --output-format stream-json` prints (assistant text, tool calls, tool
    results) live into the browser. Sign in from your phone or another
    laptop and watch a task run in real time.
-2. **A runner CLI** — install it on a *different* machine and Claude
-   Code's Bash/Read/Write/Edit tools get rerouted over MCP through the
-   server to that machine, executed there, confined to a folder you
-   choose. Claude keeps reasoning on the machine with your subscription;
-   the runner CLI gives you a `>` prompt that makes it feel like it's
-   running right there.
+2. **A runner CLI** (`highwayman`) — install it on a *different* machine
+   and Claude Code's Bash/Read/Write/Edit tools get rerouted over MCP
+   through the server to that machine, executed there, confined to a
+   folder you choose. Claude keeps reasoning on the machine with your
+   subscription; the runner CLI gives you a `>` prompt that makes it feel
+   like it's running right there — and shows the server machine's battery
+   level and charging status, since that's often a laptop.
 
 **📖 Full documentation: <https://nimapdevyash.github.io/claude-remote/>**
 
@@ -29,7 +30,7 @@ curl -fsSL https://raw.githubusercontent.com/nimapdevyash/claude-remote/main/ins
 iwr https://raw.githubusercontent.com/nimapdevyash/claude-remote/main/install.ps1 -useb | iex
 ```
 
-Then run `claude-remote` — first run walks you through server URL,
+Then run `highwayman` — first run walks you through server URL,
 folder, name, and sign-in.
 
 ## Run the server + web UI
@@ -51,10 +52,33 @@ npm run serve:public
 ```
 
 This builds the client, starts the server, opens the tunnel, and prints
-the public URL — plus the exact `claude-remote --server wss://...` command
+the public URL — plus the exact `highwayman --server wss://...` command
 to point a runner CLI at it for that run. See [Exposing it remotely](https://nimapdevyash.github.io/claude-remote/guide/remote-access)
 and [Auth & security](https://nimapdevyash.github.io/claude-remote/guide/security)
 before you do.
+
+## Running the server as a background service
+
+`npm run dev`/`npm start` keep the server tied to a foreground terminal.
+For a `systemctl`-style `start`/`stop` instead, link the `highwayman-server`
+command once:
+
+```bash
+cd server && npm link
+```
+
+Then, from anywhere:
+
+```bash
+highwayman-server start     # starts it in the background, logs to ~/.highwayman/server.log
+highwayman-server status    # is it running?
+highwayman-server stop      # stop it
+highwayman-server restart
+highwayman-server logs      # follow the log file
+```
+
+Likewise for the runner CLI, `cd runner && npm link` gives you the
+`highwayman` command globally instead of `npm run cli`.
 
 ## Repo layout
 

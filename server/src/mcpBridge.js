@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Stdio MCP server spawned by `claude` itself (via --mcp-config) for
 // runner-targeted sessions. Each tool call is forwarded over HTTP to this
-// claude-remote server's internal API, which relays it to the connected
+// Highwayman server's internal API, which relays it to the connected
 // runner CLI on the remote machine and waits for the result.
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'

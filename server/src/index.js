@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url'
 import express from 'express'
 import { WebSocketServer } from 'ws'
 import { config } from './config.js'
+import { getBatteryStatus } from './battery.js'
 import { requireAuth, requireAdmin, isValidToken } from './auth.js'
 import { accounts } from './accounts.js'
 import { authSessions } from './authSessions.js'
@@ -47,6 +48,10 @@ app.get('/api/workspace', requireAuth, (req, res) => {
   res.json({ root: config.workspaceRoot })
 })
 
+app.get('/api/status', requireAuth, async (req, res) => {
+  res.json({ battery: await getBatteryStatus() })
+})
+
 app.use('/api/sessions', requireAuth, sessionsRouter)
 app.use('/api/fs', requireAuth, fsRouter)
 app.use('/api/runners', requireAuth, runnersRouter)
@@ -61,7 +66,7 @@ if (fs.existsSync(clientDist)) {
   })
 } else {
   app.get('/', (req, res) => {
-    res.send('claude-remote API server is running. Start the client with `npm run dev -w client`.')
+    res.send('Highwayman API server is running. Start the client with `npm run dev -w client`.')
   })
 }
 
@@ -154,13 +159,13 @@ const heartbeat = setInterval(() => {
 wss.on('close', () => clearInterval(heartbeat))
 
 server.listen(config.port, () => {
-  console.log(`\n  claude-remote server listening on http://localhost:${config.port}\n`)
+  console.log(`\n  Highwayman server listening on http://localhost:${config.port}\n`)
   console.log(`  Workspace root: ${config.workspaceRoot}\n`)
 
   // `npm run dev` (scripts/dev.js) prints its own unified banner — ngrok
   // URL, CLI install one-liner, connect command — and deliberately leaves
   // credentials out of it, so skip printing them here too.
-  if (process.env.CLAUDE_REMOTE_SUPPRESS_CREDENTIALS) return
+  if (process.env.HIGHWAYMAN_SUPPRESS_CREDENTIALS) return
 
   const creds = accounts.envCredentials()
   const roles = accounts.listWithRoles()

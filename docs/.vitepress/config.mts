@@ -1,8 +1,10 @@
 import { defineConfig } from 'vitepress'
 
 export default defineConfig({
-  title: 'claude-remote',
-  description: 'Run Claude Code from anywhere — a web UI and a CLI, both backed by your own machine.',
+  title: 'Highwayman',
+  description: 'Run Claude Code from anywhere — a web UI and two CLIs (highwayman, highwayman-server), both backed by your own machine.',
+  // Tied to where this site is actually deployed (GitHub Pages project path),
+  // not the product name — keep this in sync with the repo name, not the brand.
   base: '/claude-remote/',
   cleanUrls: true,
   lastUpdated: true,
@@ -28,6 +30,7 @@ export default defineConfig({
         text: 'Reference',
         items: [
           { text: 'Architecture', link: '/guide/architecture' },
+          { text: 'Server CLI', link: '/guide/server-cli' },
           { text: 'Auth & security', link: '/guide/security' },
           { text: 'Exposing it remotely', link: '/guide/remote-access' },
           { text: 'Decisions log', link: '/guide/decisions' },

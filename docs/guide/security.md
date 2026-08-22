@@ -34,9 +34,9 @@ one, by default) can manage other accounts while signed in — no direct
 server shell access required:
 
 ```bash
-claude-remote admin list                     # list accounts
-claude-remote admin add <username> [--admin]  # create one, optionally as admin
-claude-remote admin remove <username>         # remove one
+highwayman admin list                     # list accounts
+highwayman admin add <username> [--admin]  # create one, optionally as admin
+highwayman admin remove <username>         # remove one
 ```
 
 Or from the web UI: a "Manage accounts" entry appears in the sidebar for
@@ -93,6 +93,12 @@ are specific to it:
   session, `resolveSafe` (via the runner's `write_file` action) for a
   runner-targeted one. Uploads don't introduce a second way to escape a
   session's root — they reuse the one that's already enforced everywhere.
+
+## Server status
+
+`GET /api/status` (battery info the runner CLI displays) sits behind the
+same `requireAuth` as every other route — no separate credential, and
+nothing it returns is sensitive beyond "is this laptop plugged in."
 
 ## Exposing it over the internet
 

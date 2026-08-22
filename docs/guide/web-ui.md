@@ -48,7 +48,7 @@ was, then gets swapped for a real file path once the upload finishes (or
 for an error message if it didn't). The file itself is uploaded to
 whichever filesystem the session actually targets — this server's
 `WORKSPACE_ROOT` for a local session, or the connected runner's root for a
-runner-targeted one — landing in a dedicated `.claude-remote-uploads/<session
+runner-targeted one — landing in a dedicated `.highwayman-uploads/<session
 id>/` folder so it never lands inside your actual project tree. Claude
 picks it up the normal way: by reading the path mentioned in your prompt.
 

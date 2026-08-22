@@ -77,7 +77,7 @@ export function printHeader(title) {
 }
 
 // A single rounded panel with the title inlined into the top border, e.g.
-//   ╭─ claude-remote ──────────────╮
+//   ╭─ highwayman ──────────────────╮
 //   │ connected as  "yashs-laptop" │
 //   ╰───────────────────────────────╯
 // `lines` may already contain ANSI styling — width is measured on the
@@ -233,7 +233,17 @@ export function createTurnPrinter(spinner) {
   }
 }
 
-export function printBanner({ name, root, sessionId, serverUrl, overrideSource }) {
+// `battery` is `{ hasBattery, percent, charging }` from GET /api/status —
+// the server machine's own battery, surfaced here since it's often a
+// laptop and worth knowing if it's about to run out of runway mid-task.
+export function formatBattery(battery) {
+  if (!battery?.hasBattery) return null
+  const icon = battery.charging ? '⚡' : '🔋'
+  const pct = battery.percent != null ? `${battery.percent}%` : '?'
+  return `${icon} ${pct} ${dim(battery.charging ? '(charging)' : '(on battery)')}`
+}
+
+export function printBanner({ name, root, sessionId, serverUrl, overrideSource, battery }) {
   const serverLine = overrideSource ? `${serverUrl}  ${dim(`(via ${overrideSource})`)}` : serverUrl
   const rows = [
     ['connected as', accent(`"${name}"`)],
@@ -241,10 +251,12 @@ export function printBanner({ name, root, sessionId, serverUrl, overrideSource }
     ['root', root],
     ['session', dim(sessionId)],
   ]
+  const batteryLine = formatBattery(battery)
+  if (batteryLine) rows.push(['server battery', batteryLine])
   const labelWidth = Math.max(...rows.map(([label]) => label.length))
   const lines = rows.map(([label, value]) => `${dim(label.padEnd(labelWidth))}  ${value}`)
   console.log()
-  printBox('claude-remote', lines)
+  printBox('highwayman', lines)
   console.log(dim('\nType a task and press Enter.  Ctrl+C or "exit" to quit.\n'))
 }
 

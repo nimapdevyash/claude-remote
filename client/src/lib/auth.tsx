@@ -27,8 +27,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUsername(null)
       setIsAdmin(false)
     }
-    window.addEventListener('claude-remote:unauthorized', handleUnauthorized)
-    return () => window.removeEventListener('claude-remote:unauthorized', handleUnauthorized)
+    window.addEventListener('highwayman:unauthorized', handleUnauthorized)
+    return () => window.removeEventListener('highwayman:unauthorized', handleUnauthorized)
   }, [])
 
   useEffect(() => {

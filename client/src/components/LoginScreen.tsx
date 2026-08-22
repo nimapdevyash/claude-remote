@@ -19,7 +19,7 @@ export function LoginScreen() {
           <div className="glow-ring flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-500/15 text-accent-400">
             <Terminal size={22} />
           </div>
-          <h1 className="text-xl font-semibold text-base-50">claude-remote</h1>
+          <h1 className="text-xl font-semibold text-base-50">Highwayman</h1>
           <p className="text-sm text-base-400">Sign in to connect to the server.</p>
         </div>
 

@@ -103,7 +103,7 @@ sessionsRouter.get('/:id', (req, res) => {
 
 // Saves an uploaded file next to the session's target filesystem (never the
 // browser's) so a later turn can Read it by path. Files land in a dedicated
-// .claude-remote-uploads/<sessionId>/ folder — not the session's own cwd —
+// .highwayman-uploads/<sessionId>/ folder — not the session's own cwd —
 // so a drag-and-dropped screenshot never lands inside the user's own project.
 sessionsRouter.post('/:id/uploads', uploadSingle, async (req, res) => {
   const session = store.getSession(req.params.id)
@@ -111,7 +111,7 @@ sessionsRouter.post('/:id/uploads', uploadSingle, async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'file is required' })
 
   const safeName = sanitizeFilename(req.file.originalname)
-  const relPath = path.posix.join('.claude-remote-uploads', session.id, `${nanoid(8)}-${safeName}`)
+  const relPath = path.posix.join('.highwayman-uploads', session.id, `${nanoid(8)}-${safeName}`)
   const target = session.target || { type: 'local' }
 
   try {
