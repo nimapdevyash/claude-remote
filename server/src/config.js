@@ -1,8 +1,14 @@
 import path from 'path'
 import crypto from 'crypto'
+import { fileURLToPath } from 'url'
 import dotenv from 'dotenv'
 
-dotenv.config()
+// Resolved relative to this file, not the caller's cwd — bare
+// `dotenv.config()` only finds server/.env when invoked with server/ as
+// the working directory (true for `npm start`/`npm run dev`, false for
+// the globally-linked `highwayman-server` run from anywhere else).
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+dotenv.config({ path: path.join(__dirname, '..', '.env') })
 
 const workspaceRoot = path.resolve(
   process.env.WORKSPACE_ROOT?.trim() || process.env.HOME || process.cwd(),

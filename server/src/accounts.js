@@ -4,9 +4,9 @@ import crypto from 'crypto'
 import { fileURLToPath } from 'url'
 import dotenv from 'dotenv'
 
-dotenv.config()
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+// Resolved relative to this file, not the caller's cwd — see config.js.
+dotenv.config({ path: path.join(__dirname, '..', '.env') })
 const DATA_DIR = path.join(__dirname, '..', 'data')
 const ACCOUNTS_PATH = path.join(DATA_DIR, 'accounts.json')
 const LEGACY_ACCOUNT_PATH = path.join(DATA_DIR, 'account.json') // pre-multi-account, single {username,salt,hash}
