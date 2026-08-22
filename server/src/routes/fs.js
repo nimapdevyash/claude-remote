@@ -3,6 +3,7 @@ import path from 'path'
 import { Router } from 'express'
 import { config } from '../config.js'
 import { resolveWorkspacePath } from '../paths.js'
+import { createZipStream } from '../zip.js'
 
 export const fsRouter = Router()
 
@@ -44,4 +45,37 @@ fsRouter.get('/browse', (req, res) => {
     parent,
     dirs,
   })
+})
+
+// Streams WORKSPACE_ROOT/<path> back to the browser — a single file as-is,
+// a directory zipped on the fly and never buffered fully in memory. Same
+// workspace-root sandboxing as /browse.
+fsRouter.get('/download', (req, res) => {
+  const rel = req.query.path ? String(req.query.path) : ''
+  let target
+  try {
+    target = resolveWorkspacePath(rel)
+  } catch {
+    return res.status(400).json({ error: 'Invalid path' })
+  }
+
+  let stat
+  try {
+    stat = fs.statSync(target)
+  } catch {
+    return res.status(404).json({ error: 'Not found' })
+  }
+
+  const name = path.basename(target) || 'download'
+
+  if (stat.isFile()) {
+    res.setHeader('Content-Disposition', `attachment; filename="${name}"`)
+    return res.sendFile(target)
+  }
+
+  res.setHeader('Content-Type', 'application/zip')
+  res.setHeader('Content-Disposition', `attachment; filename="${name}.zip"`)
+  const archive = createZipStream(target)
+  archive.on('error', (err) => res.destroy(err))
+  archive.pipe(res)
 })

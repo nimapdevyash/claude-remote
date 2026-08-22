@@ -55,6 +55,16 @@ picks it up the normal way: by reading the path mentioned in your prompt.
 Uploads are capped at 25MB per file. A runner-targeted upload needs that
 runner connected — same as sending a message does.
 
+## Downloading files
+
+The **Download** button in the session header (local sessions only — not
+shown for runner-targeted ones) zips the session's cwd on the fly and
+downloads it, via `GET /api/fs/download?path=...`, the same
+`resolveWorkspacePath` sandboxing as everything else, and the same bearer
+token as every other request. A single file downloads as-is; a folder
+streams down as a `.zip` — never buffered fully in memory server-side, so
+size isn't bounded the way an upload is.
+
 ## Stopping a turn
 
 The **Stop** button in the session header sends `SIGINT` to the

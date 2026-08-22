@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { AlertTriangle, HardDrive, Loader2, Radio, Square } from 'lucide-react'
+import { AlertTriangle, Download, HardDrive, Loader2, Radio, Square } from 'lucide-react'
 import { api } from '../lib/api'
 import { useWs } from '../lib/ws'
 import type { SessionDetail, Turn, WsMessage } from '../types/api'
@@ -56,6 +56,7 @@ export function ChatView({ sessionId, onActivity }: Props) {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [sendError, setSendError] = useState<string | null>(null)
   const [runnerName, setRunnerName] = useState<string | null>(null)
+  const [downloading, setDownloading] = useState(false)
   const { subscribe } = useWs()
   const bottomRef = useRef<HTMLDivElement>(null)
 
@@ -107,6 +108,28 @@ export function ChatView({ sessionId, onActivity }: Props) {
     }
   }
 
+  async function handleDownload() {
+    if (!session) return
+    setSendError(null)
+    setDownloading(true)
+    try {
+      const { blob, filename } = await api.downloadPath(session.cwd)
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+    } catch (e) {
+      setSendError(e instanceof Error ? e.message : 'Download failed')
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+
   if (loadError) {
     return <div className="flex flex-1 items-center justify-center text-sm text-bad-500">{loadError}</div>
   }
@@ -148,6 +171,17 @@ export function ChatView({ sessionId, onActivity }: Props) {
           >
             {running ? 'Running' : 'Idle'}
           </span>
+          {session.target.type !== 'runner' && (
+            <button
+              onClick={handleDownload}
+              disabled={downloading}
+              title="Download this session's files as a zip"
+              className="flex items-center gap-1.5 rounded-lg border border-base-700 px-3 py-1.5 text-xs font-medium text-base-300 transition hover:border-accent-500/50 hover:text-accent-400 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {downloading ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
+              Download
+            </button>
+          )}
           {running && (
             <button
               onClick={handleStop}

@@ -106,6 +106,19 @@ export const api = {
   browseFs(path: string) {
     return request<BrowseResult>(`/fs/browse?path=${encodeURIComponent(path)}`)
   },
+  async downloadPath(path: string): Promise<{ blob: Blob; filename: string }> {
+    const token = getToken()
+    const res = await fetch(`/api/fs/download?path=${encodeURIComponent(path)}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      throw new ApiError(res.status, body.error || 'Download failed')
+    }
+    const match = (res.headers.get('Content-Disposition') || '').match(/filename="?([^"]+)"?/)
+    const blob = await res.blob()
+    return { blob, filename: match?.[1] || 'download.zip' }
+  },
   listRunners() {
     return request<RunnerInfo[]>('/runners')
   },

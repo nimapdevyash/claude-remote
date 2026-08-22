@@ -227,3 +227,43 @@ throughout (not a `<style>` block or CSS classes) specifically because
 Outlook and other clients strip those; inline styles are what actually
 survives across clients. `sendMail` still sends a plain-text version
 alongside the HTML for clients that don't render it.
+
+## Download session files as a zip; emailing them as an attachment doesn't work (2026-08-22)
+
+**Shipped:** a **Download** button in the web UI's session header
+(`GET /api/fs/download?path=...`) that streams a single file as-is or zips
+a folder on the fly — same `resolveWorkspacePath` sandbox and bearer-token
+auth as every other route, no size limit since nothing is buffered fully
+in memory.
+
+**Files touched:** `server/src/zip.js` (new, wraps `archiver`'s
+`ZipArchive`), `server/src/routes/fs.js`, `server/package.json` (added
+`archiver`), `client/src/lib/api.ts`, `client/src/components/ChatView.tsx`.
+
+### `archiver` v8 dropped its factory-function API for a class-based one
+
+**Why:** worth calling out since it broke on first try — `archiver@8` is a
+ground-up ESM rewrite; the old `const archive = archiver('zip', opts)`
+CommonJS pattern (every example anywhere on the web) throws
+`does not provide an export named 'default'`. The current API is
+`import { ZipArchive } from 'archiver'; new ZipArchive({ zlib: { level: 9 } })`
+— otherwise the same `.directory()`/`.pipe()`/`.finalize()` methods.
+
+### Emailing the files as an attachment was tried and abandoned — Gmail blocks it outright, encrypted or not
+
+**Why:** the natural next step after building email notifications was
+"email me the code too," attached as a zip. Gmail's outbound SMTP rejects
+any attachment it can't fully content-scan for malware — that includes a
+plain zip containing `.js`/script files *and*, it turns out, an AES-256
+password-protected zip, since an encrypted archive is just as unscannable
+as one full of scripts. Verified concretely: a genuinely-encrypted zip
+(confirmed unreadable without the password via `unzip -P`) got the exact
+same `552-5.7.0 potential security issue` rejection as the plain one. This
+is a policy enforced by Gmail's own sending servers, not something fixable
+from this codebase without switching to a different SMTP provider (a
+transactional provider like SendGrid/Mailgun/SES doesn't apply the same
+scan-or-block rule) — out of scope for a Gmail-App-Password setup. The
+`email-files` route, `createEncryptedZipBuffer` (`@zip.js/zip.js`), and the
+UI's Email button were all built, verified, and then removed rather than
+left in as a feature that reliably fails for its main use case. The
+Download button covers the actual need with no such restriction.
