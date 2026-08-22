@@ -176,3 +176,54 @@ and the GitHub Pages deploy path (`docs/.vitepress/config.mts`'s `base:
 renaming those is a separate, deliberate step (a GitHub repo rename plus a
 matching `base` update) rather than a side effect of a text rename across
 the codebase.
+
+## `highwayman-server` emails its own connection info (2026-08-22)
+
+**Shipped:** `highwayman-server start` optionally opens an ngrok tunnel
+(`--public`/`-p`) and, if SMTP is configured, emails an HTML connection-info
+card (local/public URL, runner CLI install + connect commands, sign-in
+usernames) to `MAIL_TO` or a one-off `--to <emails>` list. A new
+`highwayman-server mail <email...>` command sends the same card to any
+address on demand, and `connection-info` prints it to the terminal.
+
+**Files touched:** `server/src/cli.js`, `server/src/mailer.js` (new),
+`server/src/emailTemplate.js` (new), `server/package.json` (added
+`nodemailer`), `server/.env.example`.
+
+### The ngrok tunnel is opt-in (`--public`), not automatic on every `start`
+
+**Why:** `npm run dev` already opens a tunnel unconditionally because
+that's a foreground command you're actively watching. `highwayman-server
+start` is meant for "leave this running unattended," and silently exposing
+a machine to the public internet every time someone backgrounds the server
+is the kind of default that surprises people later. Requiring `--public`
+makes opening a tunnel a decision, not a side effect.
+
+### Passwords are never emailed — only usernames
+
+**Why:** email isn't a secure channel, and a plaintext password sitting in
+an inbox (or a mail server's logs, or a phone's notification preview)
+indefinitely is a much bigger liability than typing a password once.
+`connection-info` and `status` still print the password, since those stay
+on the local machine — the email-vs-console split lives in
+`formatConnectionInfo`'s `includePassword` option.
+
+### Recipients: `MAIL_TO` as a default, `--to` (or the `mail` command) for anyone else
+
+**Why:** the common case — notify yourself or a fixed small team whenever
+the server comes up — wants zero typing per run, so `MAIL_TO` in
+`server/.env` covers it. But "email this one person about this one tunnel"
+shouldn't require editing `.env` first, so `--to` on `start`/`restart` and
+the standalone `mail <email...>` command both take addresses ad hoc,
+requiring only that SMTP itself (`SMTP_USER`/`SMTP_PASS`) is configured —
+`MAIL_TO` stays optional.
+
+### HTML with a plain-text fallback, not plain text only
+
+**Why:** the connection info has real structure — a status, two URLs, a
+two-step setup, a credentials block — that a wall of monospace text
+flattens. `server/src/emailTemplate.js` uses inline `style` attributes
+throughout (not a `<style>` block or CSS classes) specifically because
+Outlook and other clients strip those; inline styles are what actually
+survives across clients. `sendMail` still sends a plain-text version
+alongside the HTML for clients that don't render it.
