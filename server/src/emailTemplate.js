@@ -81,9 +81,12 @@ export function buildConnectionInfoEmail(info, { title = 'Highwayman server is u
       <div style="height:1px;background:#e2e8f0;margin:24px 0;"></div>
 
       ${sectionLabel('Runner CLI setup')}
-      <p style="margin:0 0 6px;font-size:13px;color:#64748b;">1. Install (macOS / Linux)</p>
+      <p style="margin:0 0 6px;font-size:13px;color:#64748b;">1a. Install (macOS / Linux)</p>
       ${codeBlock('curl -fsSL https://raw.githubusercontent.com/nimapdevyash/claude-remote/main/install.sh | bash')}
-      <p style="margin:16px 0 6px;font-size:13px;color:#64748b;">2. Connect</p>
+      <p style="margin:16px 0 6px;font-size:13px;color:#64748b;">1b. Install (Windows — PowerShell)</p>
+      ${codeBlock('iwr https://raw.githubusercontent.com/nimapdevyash/claude-remote/main/install.ps1 -useb | iex')}
+      <p style="margin:8px 0 0;font-size:12px;color:#94a3b8;line-height:1.5;">Windows needs Node.js 18+ first (<code style="background:#f1f5f9;padding:1px 5px;border-radius:4px;">winget install OpenJS.NodeJS</code>). The installer adds <code style="background:#f1f5f9;padding:1px 5px;border-radius:4px;">%USERPROFILE%\\.local\\bin</code> to your User PATH — open a <strong>new</strong> terminal afterwards so it's picked up.</p>
+      <p style="margin:16px 0 6px;font-size:13px;color:#64748b;">2. Connect (same command on every platform)</p>
       ${codeBlock(`highwayman --server ${wsUrl}/ws`)}
 
       <div style="height:1px;background:#e2e8f0;margin:24px 0;"></div>

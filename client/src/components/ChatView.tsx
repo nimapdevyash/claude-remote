@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { AlertTriangle, Download, HardDrive, Loader2, Radio, Square } from 'lucide-react'
+import { AlertTriangle, Download, HardDrive, Loader2, Menu, Radio, Square } from 'lucide-react'
 import { api } from '../lib/api'
 import { useWs } from '../lib/ws'
 import type { SessionDetail, Turn, WsMessage } from '../types/api'
@@ -49,9 +49,11 @@ function applyWsMessage(session: SessionDetail, msg: WsMessage): SessionDetail {
 type Props = {
   sessionId: string
   onActivity?: () => void
+  sidebarOpen?: boolean
+  onToggleSidebar?: () => void
 }
 
-export function ChatView({ sessionId, onActivity }: Props) {
+export function ChatView({ sessionId, onActivity, sidebarOpen, onToggleSidebar }: Props) {
   const [session, setSession] = useState<SessionDetail | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [sendError, setSendError] = useState<string | null>(null)
@@ -145,22 +147,33 @@ export function ChatView({ sessionId, onActivity }: Props) {
 
   return (
     <div className="flex h-full flex-1 flex-col">
-      <header className="flex items-center justify-between border-b border-base-800 px-6 py-4">
-        <div>
-          <h2 className="text-sm font-semibold text-base-50">{session.name}</h2>
-          <p className="font-mono text-xs text-base-500">{session.cwd || '~'}</p>
+      <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-base-800 px-3 py-3 md:px-6 md:py-4">
+        <div className="flex min-w-0 items-center gap-2">
+          {onToggleSidebar && (
+            <button
+              onClick={onToggleSidebar}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-base-400 transition hover:bg-base-800 hover:text-base-100"
+              title={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
+            >
+              <Menu size={16} />
+            </button>
+          )}
+          <div className="min-w-0">
+            <h2 className="truncate text-sm font-semibold text-base-50">{session.name}</h2>
+            <p className="truncate font-mono text-xs text-base-500">{session.cwd || '~'}</p>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <span className="flex items-center gap-1.5 rounded-full bg-base-800 px-2.5 py-1 text-xs font-medium text-base-300">
             {session.target.type === 'runner' ? (
               <>
                 <Radio size={11} className="text-good-500" />
-                {runnerName || 'runner'}
+                <span className="hidden sm:inline">{runnerName || 'runner'}</span>
               </>
             ) : (
               <>
                 <HardDrive size={11} />
-                this server
+                <span className="hidden sm:inline">this server</span>
               </>
             )}
           </span>
@@ -179,7 +192,7 @@ export function ChatView({ sessionId, onActivity }: Props) {
               className="flex items-center gap-1.5 rounded-lg border border-base-700 px-3 py-1.5 text-xs font-medium text-base-300 transition hover:border-accent-500/50 hover:text-accent-400 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {downloading ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
-              Download
+              <span className="hidden sm:inline">Download</span>
             </button>
           )}
           {running && (
@@ -194,7 +207,7 @@ export function ChatView({ sessionId, onActivity }: Props) {
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <div className="flex-1 overflow-y-auto px-3 py-4 sm:px-6 sm:py-6">
         {session.turns.length === 0 && (
           <div className="flex h-full flex-col items-center justify-center text-center text-base-500">
             <p className="text-sm">Send a task to get started.</p>
@@ -255,7 +268,7 @@ export function ChatView({ sessionId, onActivity }: Props) {
         </div>
       </div>
 
-      {sendError && <p className="px-6 pb-1 text-xs text-bad-500">{sendError}</p>}
+      {sendError && <p className="px-3 pb-1 text-xs text-bad-500 sm:px-6">{sendError}</p>}
       <Composer disabled={running} sessionId={sessionId} onSend={handleSend} />
     </div>
   )

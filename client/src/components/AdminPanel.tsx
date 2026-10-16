@@ -57,9 +57,9 @@ export function AdminPanel({ onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl border border-base-700 bg-base-900 shadow-2xl">
-        <div className="flex items-center justify-between border-b border-base-800 px-5 py-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 px-4 py-6 backdrop-blur-sm">
+      <div className="flex max-h-full w-full max-w-md flex-col rounded-2xl border border-base-700 bg-base-900 shadow-2xl">
+        <div className="flex shrink-0 items-center justify-between border-b border-base-800 px-5 py-4">
           <h2 className="flex items-center gap-2 text-sm font-semibold text-base-50">
             <ShieldCheck size={15} className="text-accent-400" />
             Manage accounts
@@ -102,7 +102,7 @@ export function AdminPanel({ onClose }: Props) {
           )}
         </div>
 
-        <div className="space-y-2 border-t border-base-800 px-5 py-4">
+        <div className="shrink-0 space-y-2 overflow-y-auto border-t border-base-800 px-5 py-4">
           <p className="flex items-center gap-1.5 text-xs font-medium text-base-400">
             <UserPlus size={13} />
             Add account

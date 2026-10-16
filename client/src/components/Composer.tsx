@@ -108,12 +108,12 @@ export function Composer({ disabled, sessionId, onSend }: Props) {
   }
 
   return (
-    <div className="border-t border-base-800 p-4">
+    <div className="border-t border-base-800 p-3 sm:p-4">
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`flex items-end gap-2 rounded-2xl border bg-base-900 p-2 pl-4 transition focus-within:border-accent-500/60 ${
+        className={`flex items-end gap-2 rounded-2xl border bg-base-900 p-2 pl-3 transition focus-within:border-accent-500/60 sm:pl-4 ${
           isDragging ? 'border-accent-500 bg-accent-500/5' : 'border-base-700'
         }`}
       >

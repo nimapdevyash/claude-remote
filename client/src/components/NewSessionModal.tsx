@@ -67,16 +67,16 @@ export function NewSessionModal({ onClose, onCreated }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-2xl border border-base-700 bg-base-900 shadow-2xl">
-        <div className="flex items-center justify-between border-b border-base-800 px-5 py-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 px-4 py-6 backdrop-blur-sm">
+      <div className="flex max-h-full w-full max-w-lg flex-col rounded-2xl border border-base-700 bg-base-900 shadow-2xl">
+        <div className="flex shrink-0 items-center justify-between border-b border-base-800 px-5 py-4">
           <h2 className="text-sm font-semibold text-base-50">New session</h2>
           <button onClick={onClose} className="text-base-400 hover:text-base-100">
             <X size={16} />
           </button>
         </div>
 
-        <div className="space-y-4 px-5 py-4">
+        <div className="space-y-4 overflow-y-auto px-5 py-4">
           <div>
             <label className="mb-1.5 block text-xs font-medium text-base-400">Run on</label>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -192,7 +192,7 @@ export function NewSessionModal({ onClose, onCreated }: Props) {
           {error && <p className="text-sm text-bad-500">{error}</p>}
         </div>
 
-        <div className="flex items-center justify-end gap-2 border-t border-base-800 px-5 py-4">
+        <div className="flex shrink-0 items-center justify-end gap-2 border-t border-base-800 px-5 py-4">
           <button onClick={onClose} className="rounded-lg px-4 py-2 text-sm text-base-300 hover:bg-base-800">
             Cancel
           </button>
